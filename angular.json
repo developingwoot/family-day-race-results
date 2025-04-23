@@ -16,7 +16,7 @@
             "outputPath": {
               "base": "public",
               "browser": ""
-            }
+            },
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
