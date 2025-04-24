@@ -118,8 +118,12 @@ export class MostRecentRaceComponent implements OnDestroy, AfterViewInit {
         next: (race) => {
           this.raceData.set(race);
           if (race?.Result) {
-            // Filter out results with BestLap value of 999999999 (no valid lap)
-            this.dataSource.data = race.Result.filter(result => result.BestLap !== 999999999);
+            // Filter out invalid results:
+            // - BestLap of 999999999 (no valid lap)
+            // - TotalTime of 0 (didn't participate)
+            this.dataSource.data = race.Result.filter(result => 
+              result.BestLap !== 999999999 && result.TotalTime !== 0
+            );
           }
           this.isLoading.set(false);
         },

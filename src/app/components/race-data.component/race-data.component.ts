@@ -4,12 +4,14 @@ import { DataService } from '../../services/data.service';
 import { RaceData } from '../../models/race-data';
 import { MostRecentRaceComponent } from "../most-recent-race/most-recent-race.component";
 import { BestRecordsComponent } from "../best-records/best-records.component";
+import { SiteStatsComponent } from "../site-stats/site-stats.component";
 
 @Component({
   selector: 'app-race-data',
   template: `
     <app-best-records></app-best-records>
     <app-most-recent-race></app-most-recent-race>
+    <app-site-stats></app-site-stats>
   `,
   styles: [`
     .error {
@@ -17,7 +19,7 @@ import { BestRecordsComponent } from "../best-records/best-records.component";
       padding: 1rem;
     }
   `],
-  imports: [MostRecentRaceComponent, BestRecordsComponent]
+  imports: [MostRecentRaceComponent, BestRecordsComponent, SiteStatsComponent]
 })
 export class RaceDataComponent {
   private authService = inject(AuthService);

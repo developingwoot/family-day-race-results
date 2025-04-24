@@ -8,8 +8,9 @@ import {
   onSnapshot,
   DocumentData 
 } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { RaceData } from '../models/race-data';
+import { SiteStats } from '../models/site-stats';
 
 @Injectable({
   providedIn: 'root'
@@ -87,5 +88,78 @@ export class DataService {
       // Cleanup when unsubscribing
       return () => unsubscribe();
     });
+  }
+
+  getSiteStatsStream(): Observable<SiteStats[]> {
+    return this.getAllRacesStream().pipe(
+      map(races => this.calculateSiteStats(races))
+    );
+  }
+
+  private calculateSiteStats(races: RaceData[]): SiteStats[] {
+    // Initialize stats for each driver
+    const siteStats: Record<string, SiteStats> = {
+      'Fishkill': this.initSiteStats('Fishkill'),
+      'Wallkill': this.initSiteStats('Wallkill'),
+      'Warwick': this.initSiteStats('Warwick'),
+      'San Juan': this.initSiteStats('San Juan'),
+      'Patterson': this.initSiteStats('Patterson')
+    };
+    
+    // Process each race
+    races.forEach(race => {
+      if (!race.Result) return;
+      
+      // Sort results by total time (ascending)
+      // Filter out invalid times: 999999999 (no valid lap) and 0 (didn't participate)
+      const sortedResults = [...race.Result]
+        .filter(result => result.TotalTime !== 999999999 && result.TotalTime !== 0)
+        .sort((a, b) => a.TotalTime - b.TotalTime);
+      
+      // Count placements
+      sortedResults.forEach((result, index) => {
+        // Extract driver prefix (e.g., "Fishkill" from "Fishkill Driver 1")
+        const driverPrefix = this.extractDriverPrefix(result.DriverName);
+        
+        if (driverPrefix && siteStats[driverPrefix]) {
+          // Increment total races
+          siteStats[driverPrefix].totalRaces++;
+          
+          // Increment placement count based on position
+          switch (index) {
+            case 0: siteStats[driverPrefix].firstPlaceCount++; break;
+            case 1: siteStats[driverPrefix].secondPlaceCount++; break;
+            case 2: siteStats[driverPrefix].thirdPlaceCount++; break;
+            case 3: siteStats[driverPrefix].fourthPlaceCount++; break;
+            case 4: siteStats[driverPrefix].fifthPlaceCount++; break;
+          }
+        }
+      });
+    });
+    
+    // Convert to array and return
+    return Object.values(siteStats);
+  }
+
+  private initSiteStats(driverName: string): SiteStats {
+    return {
+      driverName,
+      firstPlaceCount: 0,
+      secondPlaceCount: 0,
+      thirdPlaceCount: 0,
+      fourthPlaceCount: 0,
+      fifthPlaceCount: 0,
+      totalRaces: 0
+    };
+  }
+
+  private extractDriverPrefix(driverName: string): string | null {
+    const prefixes = ['Fishkill', 'Wallkill', 'Warwick', 'San Juan', 'Patterson'];
+    for (const prefix of prefixes) {
+      if (driverName.startsWith(prefix)) {
+        return prefix;
+      }
+    }
+    return null;
   }
 }

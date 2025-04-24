@@ -155,7 +155,8 @@ export class BestRecordsComponent implements OnDestroy {
         }
         
         // For race time, we can't easily check cuts, so just use the minimum time filter
-        if (result.TotalTime < bestRace && result.TotalTime >= MIN_RACE_TIME) {
+        // Also skip results with TotalTime of 0 (didn't participate)
+        if (result.TotalTime !== 0 && result.TotalTime < bestRace && result.TotalTime >= MIN_RACE_TIME) {
           bestRace = result.TotalTime;
           bestRaceDriverName = result.DriverName;
         }
