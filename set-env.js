@@ -34,7 +34,9 @@ if (missingVars.length > 0) {
 }
 
 // Create the environment.ts file content
-const environmentFile = `export const environment = {
+const environmentFile = `import { Environment } from './environment.d';
+
+export const environment: Environment = {
   production: ${isProduction},
   firebase: {
     apiKey: "${process.env.FIREBASE_API_KEY}",
