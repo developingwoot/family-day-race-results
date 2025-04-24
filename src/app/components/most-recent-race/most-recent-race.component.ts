@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
-import { Component, inject, OnDestroy, signal, ViewChild, AfterViewInit } from "@angular/core";
+import { Component, inject, OnDestroy, signal, ViewChild, AfterViewInit, effect } from "@angular/core";
 import { DataService } from "../../services/data.service";
+import { AuthService } from "../../services/auth.service";
 import { RaceData, Result } from "../../models/race-data";
 import { catchError, EMPTY, Subscription } from "rxjs";
 import { MatTableModule, MatTableDataSource } from "@angular/material/table";
@@ -82,7 +83,8 @@ import { MatSortModule, Sort, MatSort } from "@angular/material/sort";
 })
 export class MostRecentRaceComponent implements OnDestroy, AfterViewInit {
   private raceService = inject(DataService);
-  private subscription: Subscription;
+  private authService = inject(AuthService);
+  private subscription?: Subscription;
   
   @ViewChild(MatSort) sort!: MatSort;
   
@@ -94,6 +96,15 @@ export class MostRecentRaceComponent implements OnDestroy, AfterViewInit {
   dataSource = new MatTableDataSource<Result>([]);
   
   constructor() {
+    // Wait for authentication before loading data
+    effect(() => {
+      if (this.authService.isAuthenticated()) {
+        this.loadData();
+      }
+    });
+  }
+  
+  private loadData(): void {
     this.subscription = this.raceService.getMostRecentRaceStream()
       .pipe(
         catchError(error => {

@@ -21,7 +21,9 @@ const requiredEnvVars = [
   'FIREBASE_PROJECT_ID',
   'FIREBASE_STORAGE_BUCKET',
   'FIREBASE_MESSAGING_SENDER_ID',
-  'FIREBASE_APP_ID'
+  'FIREBASE_APP_ID',
+  'FIREBASE_AUTH_EMAIL',
+  'FIREBASE_AUTH_PASSWORD'
 ];
 
 const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
@@ -45,6 +47,10 @@ export const environment: Environment = {
     storageBucket: "${process.env.FIREBASE_STORAGE_BUCKET}",
     messagingSenderId: "${process.env.FIREBASE_MESSAGING_SENDER_ID}",
     appId: "${process.env.FIREBASE_APP_ID}"
+  },
+  auth: {
+    email: "${process.env.FIREBASE_AUTH_EMAIL}",
+    password: "${process.env.FIREBASE_AUTH_PASSWORD}"
   }
 };`;
 

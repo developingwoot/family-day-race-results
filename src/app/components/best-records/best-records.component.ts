@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
-import { Component, inject, OnDestroy, signal } from "@angular/core";
+import { Component, inject, OnDestroy, signal, effect } from "@angular/core";
 import { DataService } from "../../services/data.service";
+import { AuthService } from "../../services/auth.service";
 import { RaceData, Result } from "../../models/race-data";
 import { catchError, EMPTY, Subscription } from "rxjs";
 import { MatCardModule } from "@angular/material/card";
@@ -79,7 +80,8 @@ import { MatCardModule } from "@angular/material/card";
 })
 export class BestRecordsComponent implements OnDestroy {
   private dataService = inject(DataService);
-  private subscription: Subscription;
+  private authService = inject(AuthService);
+  private subscription?: Subscription;
   
   bestLapTime = signal<number | null>(null);
   bestLapDriver = signal<string | null>(null);
@@ -88,6 +90,15 @@ export class BestRecordsComponent implements OnDestroy {
   bestRaceDriver = signal<string | null>(null);
   
   constructor() {
+    // Wait for authentication before loading data
+    effect(() => {
+      if (this.authService.isAuthenticated()) {
+        this.loadData();
+      }
+    });
+  }
+  
+  private loadData(): void {
     this.subscription = this.dataService.getAllRacesStream()
       .pipe(
         catchError(error => {

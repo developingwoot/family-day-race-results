@@ -9,6 +9,10 @@ export interface Environment {
     appId: string;
     measurementId?: string;
   };
+  auth: {
+    email: string;
+    password: string;
+  };
 }
 
 export declare const environment: Environment;
