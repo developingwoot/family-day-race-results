@@ -13,7 +13,7 @@ import { MatSortModule, Sort, MatSort } from "@angular/material/sort";
   imports: [CommonModule, MatTableModule, MatSortModule],
   template: `
     <div class="stats-container">
-      <h3>Site Statistics</h3>
+      <h3>Site Place Finishes</h3>
       
       <div class="mat-elevation-z8 stats-table-container">
         <table mat-table [dataSource]="dataSource" matSort>
