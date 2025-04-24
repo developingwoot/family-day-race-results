@@ -1,1 +1,40 @@
 /* You can add global styles to this file, and also import other style files */
+@import '@angular/material/prebuilt-themes/pink-bluegrey.css';
+/* You can choose from: indigo-pink.css, deeppurple-amber.css, pink-bluegrey.css, purple-green.css */
+
+html, body { height: 100%; }
+body { 
+  margin: 0; 
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: #303030;
+  color: #ffffff;
+}
+
+/* Ensure consistent dark styling for cards and other elements */
+mat-card {
+  background-color: #424242;
+  color: #ffffff;
+}
+
+/* Ensure links are visible on dark background */
+a:not(.mat-button):not(.mat-raised-button):not(.mat-fab):not(.mat-mini-fab) {
+  color: #bb86fc; /* Material Design purple accent color */
+}
+
+/* Improve table readability in dark mode */
+table {
+  background-color: #424242;
+}
+
+th {
+  color: #bb86fc;
+}
+
+/* Ensure form fields are styled for dark theme */
+.mat-form-field-label {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.mat-form-field-underline {
+  background-color: rgba(255, 255, 255, 0.7);
+}
