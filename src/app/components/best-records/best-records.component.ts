@@ -154,11 +154,17 @@ export class BestRecordsComponent implements OnDestroy {
           }
         }
         
-        // For race time, we can't easily check cuts, so just use the minimum time filter
+        // For race time, check if driver completed all required laps
         // Also skip results with TotalTime of 0 (didn't participate)
-        if (result.TotalTime !== 0 && result.TotalTime < bestRace && result.TotalTime >= MIN_RACE_TIME) {
-          bestRace = result.TotalTime;
-          bestRaceDriverName = result.DriverName;
+        if (result.TotalTime !== 0 && result.TotalTime >= MIN_RACE_TIME) {
+          // Count how many laps this driver completed
+          const driverLaps = race.Laps.filter(lap => lap.DriverGuid === result.DriverGuid).length;
+          
+          // Only consider drivers who completed all required laps
+          if (driverLaps >= race.RaceLaps && result.TotalTime < bestRace) {
+            bestRace = result.TotalTime;
+            bestRaceDriverName = result.DriverName;
+          }
         }
       });
     });
