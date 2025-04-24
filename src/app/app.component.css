@@ -28,4 +28,6 @@
 
 mat-toolbar {
   margin-bottom: 20px;
+  background-color: #424242;
+  color: #ffffff;
 }
