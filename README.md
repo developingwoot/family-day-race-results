@@ -2,6 +2,26 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.9.
 
+## Environment Variables
+
+This project uses environment variables for configuration, particularly for Firebase settings. Here's how to set them up:
+
+1. Create a `.env` file in the root directory with the following variables:
+   ```
+   FIREBASE_API_KEY=your-api-key
+   FIREBASE_AUTH_DOMAIN=your-auth-domain
+   FIREBASE_PROJECT_ID=your-project-id
+   FIREBASE_STORAGE_BUCKET=your-storage-bucket
+   FIREBASE_MESSAGING_SENDER_ID=your-messaging-sender-id
+   FIREBASE_APP_ID=your-app-id
+   ```
+
+2. The environment variables are processed by the `set-env.js` script, which generates the necessary Angular environment files.
+
+3. For local development, the script runs automatically when you start the development server.
+
+4. For CI/CD pipelines (GitHub Actions), the environment variables are set as GitHub secrets and used during the build process.
+
 ## Development server
 
 To start a local development server, run:
