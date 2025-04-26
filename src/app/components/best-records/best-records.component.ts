@@ -329,11 +329,17 @@ export class BestRecordsComponent implements OnDestroy {
         // For race time, check if driver completed all required laps
         // Also skip results with TotalTime of 0 (didn't participate)
         if (result.TotalTime !== 0 && result.TotalTime >= MIN_RACE_TIME) {
-          // Count how many laps this driver completed
-          const driverLaps = race.Laps.filter(lap => lap.DriverGuid === result.DriverGuid).length;
+          // Get all laps for this driver
+          const driverLaps = race.Laps.filter(lap => lap.DriverGuid === result.DriverGuid);
           
-          // Only consider drivers who completed all required laps
-          if (driverLaps >= race.RaceLaps) {
+          // Count how many laps this driver completed
+          const lapCount = driverLaps.length;
+          
+          // Check if all laps have 0 cuts
+          const allLapsHaveZeroCuts = driverLaps.every(lap => lap.Cuts === 0);
+          
+          // Only consider drivers who completed all required laps AND have no cuts on any lap
+          if (lapCount >= race.RaceLaps && allLapsHaveZeroCuts) {
             // Update overall best race time
             if (result.TotalTime < bestRace) {
               bestRace = result.TotalTime;
