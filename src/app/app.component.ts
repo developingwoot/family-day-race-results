@@ -9,7 +9,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, MatToolbarModule, MatButtonModule, CommonModule],
+  imports: [RouterOutlet, MatToolbarModule, MatButtonModule, CommonModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })

@@ -46,17 +46,6 @@ import { MatSortModule, Sort, MatSort } from "@angular/material/sort";
             <td mat-cell *matCellDef="let stats"> {{ stats.thirdPlaceCount }} </td>
           </ng-container>
           
-          <!-- 4th Place Column -->
-          <ng-container matColumnDef="fourth">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> 4th </th>
-            <td mat-cell *matCellDef="let stats"> {{ stats.fourthPlaceCount }} </td>
-          </ng-container>
-          
-          <!-- 5th Place Column -->
-          <ng-container matColumnDef="fifth">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> 5th </th>
-            <td mat-cell *matCellDef="let stats"> {{ stats.fifthPlaceCount }} </td>
-          </ng-container>
           
           <!-- Total Races Column -->
           <ng-container matColumnDef="total">
@@ -105,7 +94,7 @@ export class SiteStatsComponent implements OnDestroy, AfterViewInit {
   
   @ViewChild(MatSort) sort!: MatSort;
   
-  displayedColumns: string[] = ['driver', 'first', 'second', 'third', 'fourth', 'fifth', 'total'];
+  displayedColumns: string[] = ['driver', 'first', 'second', 'third', 'total'];
   dataSource = new MatTableDataSource<SiteStats>([]);
   
   constructor() {

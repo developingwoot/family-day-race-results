@@ -3,7 +3,5 @@ export interface SiteStats {
   firstPlaceCount: number;
   secondPlaceCount: number;
   thirdPlaceCount: number;
-  fourthPlaceCount: number;
-  fifthPlaceCount: number;
   totalRaces: number;
 }

@@ -110,28 +110,54 @@ export class DataService {
     races.forEach(race => {
       if (!race.Result) return;
       
-      // Sort results by total time (ascending)
-      // Filter out invalid times: 999999999 (no valid lap) and 0 (didn't participate)
+      // First, count total races for each site (without lap completion restriction)
+      race.Result.forEach(result => {
+        // Skip invalid times: 999999999 (no valid lap) and 0 (didn't participate)
+        if (result.TotalTime !== 999999999 && result.TotalTime !== 0) {
+          const driverPrefix = this.extractDriverPrefix(result.DriverName);
+          if (driverPrefix && siteStats[driverPrefix]) {
+            // Increment total races
+            siteStats[driverPrefix].totalRaces++;
+          }
+        }
+      });
+      
+      // Then, calculate place finishes with lap completion restriction
+      if (!race.Laps) return;
+      
       const sortedResults = [...race.Result]
-        .filter(result => result.TotalTime !== 999999999 && result.TotalTime !== 0)
+        .filter(result => {
+          // Filter out invalid times
+          if (result.TotalTime === 999999999 || result.TotalTime === 0) {
+            return false;
+          }
+          
+          // Count how many laps this driver completed
+          const driverLaps = race.Laps.filter(lap => lap.DriverGuid === result.DriverGuid);
+          const lapCount = driverLaps.length;
+          
+          // Check if all laps have 0 cuts
+          const allLapsHaveZeroCuts = driverLaps.every(lap => lap.Cuts === 0);
+          
+          // Only include drivers who completed at least the required number of laps
+          // and have no cuts on any lap
+          return lapCount >= race.RaceLaps && allLapsHaveZeroCuts;
+        })
         .sort((a, b) => a.TotalTime - b.TotalTime);
       
-      // Count placements
+      // Count only 1st, 2nd, and 3rd place finishes
       sortedResults.forEach((result, index) => {
+        if (index > 2) return; // Only process first 3 positions
+        
         // Extract driver prefix (e.g., "Fishkill" from "Fishkill Driver 1")
         const driverPrefix = this.extractDriverPrefix(result.DriverName);
         
         if (driverPrefix && siteStats[driverPrefix]) {
-          // Increment total races
-          siteStats[driverPrefix].totalRaces++;
-          
           // Increment placement count based on position
           switch (index) {
             case 0: siteStats[driverPrefix].firstPlaceCount++; break;
             case 1: siteStats[driverPrefix].secondPlaceCount++; break;
             case 2: siteStats[driverPrefix].thirdPlaceCount++; break;
-            case 3: siteStats[driverPrefix].fourthPlaceCount++; break;
-            case 4: siteStats[driverPrefix].fifthPlaceCount++; break;
           }
         }
       });
@@ -147,8 +173,6 @@ export class DataService {
       firstPlaceCount: 0,
       secondPlaceCount: 0,
       thirdPlaceCount: 0,
-      fourthPlaceCount: 0,
-      fifthPlaceCount: 0,
       totalRaces: 0
     };
   }
