@@ -6,11 +6,17 @@ import {
   orderBy, 
   limit,
   onSnapshot,
-  DocumentData 
+  DocumentData,
+  doc,
+  getDoc,
+  where,
+  addDoc,
+  updateDoc
 } from '@angular/fire/firestore';
 import { Observable, map } from 'rxjs';
 import { RaceData } from '../models/race-data';
 import { SiteStats } from '../models/site-stats';
+import { Tournament } from '../models/tournament';
 
 @Injectable({
   providedIn: 'root'
@@ -185,5 +191,169 @@ export class DataService {
       }
     }
     return null;
+  }
+  
+  // Get a specific race by ID
+  getRaceById(raceId: string): Observable<RaceData | null> {
+    return new Observable<RaceData | null>(subscriber => {
+      const raceDocRef = doc(this.firestore, 'race-data', raceId);
+      
+      getDoc(raceDocRef)
+        .then(docSnap => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const raceData: RaceData = {
+              id: docSnap.id,
+              ...data
+            } as RaceData;
+            
+            subscriber.next(raceData);
+          } else {
+            subscriber.next(null);
+          }
+          subscriber.complete();
+        })
+        .catch(error => {
+          console.error('Error getting race document:', error);
+          subscriber.error(error);
+        });
+    });
+  }
+  
+  // Check if tournament is active
+  isTournamentActive$ = new Observable<boolean>(subscriber => {
+    const tournamentsCollection = collection(this.firestore, 'tournaments');
+    const activeQuery = query(
+      tournamentsCollection,
+      where('status', 'in', ['qualifying', 'heats', 'final']),
+      limit(1)
+    );
+    
+    const unsubscribe = onSnapshot(activeQuery, 
+      (snapshot) => {
+        subscriber.next(!snapshot.empty);
+      },
+      (error) => {
+        console.error('Firestore stream error:', error);
+        subscriber.error(error);
+      }
+    );
+    
+    // Cleanup when unsubscribing
+    return () => unsubscribe();
+  });
+  
+  // Get active tournament
+  getActiveTournament(): Observable<Tournament | null> {
+    const tournamentsCollection = collection(this.firestore, 'tournaments');
+    const activeQuery = query(
+      tournamentsCollection,
+      where('status', 'in', ['qualifying', 'heats', 'final']),
+      limit(1)
+    );
+    
+    return new Observable<Tournament | null>(subscriber => {
+      const unsubscribe = onSnapshot(activeQuery, 
+        (snapshot) => {
+          if (snapshot.empty) {
+            subscriber.next(null);
+            return;
+          }
+          
+          const doc = snapshot.docs[0];
+          const data = doc.data();
+          const tournament = {
+            id: doc.id,
+            ...data
+          } as Tournament;
+          
+          subscriber.next(tournament);
+        },
+        (error) => {
+          console.error('Firestore stream error:', error);
+          subscriber.error(error);
+        }
+      );
+      
+      // Cleanup when unsubscribing
+      return () => unsubscribe();
+    });
+  }
+  
+  // For backward compatibility
+  isTournamentActive(): boolean {
+    // This is a placeholder - in a real implementation, you would check if there's an active tournament
+    // For now, we'll return false
+    return false;
+  }
+  
+  // Create a new tournament
+  createTournament(tournamentData: Partial<Tournament>): Observable<string> {
+    return new Observable<string>(subscriber => {
+      const tournamentsCollection = collection(this.firestore, 'tournaments');
+      
+      // Initialize empty structures for results tracking
+      const tournament: Partial<Tournament> = {
+        ...tournamentData,
+        status: 'setup',
+        qualifyingResults: {},
+        heats: [],
+        finalHeat: {
+          status: 'scheduled',
+          scheduledTime: tournamentData.finalStart || new Date(),
+          participants: []
+        },
+        winners: {
+          first: { playerId: '', playerName: '', site: '' },
+          second: { playerId: '', playerName: '', site: '' },
+          third: { playerId: '', playerName: '', site: '' }
+        }
+      };
+      
+      // Initialize qualifyingResults for each included site
+      if (tournament.sitesIncluded) {
+        tournament.sitesIncluded.forEach(site => {
+          tournament.qualifyingResults![site] = [];
+        });
+      }
+      
+      // Add the document to Firestore
+      addDoc(tournamentsCollection, tournament)
+        .then(docRef => {
+          subscriber.next(docRef.id);
+          subscriber.complete();
+        })
+        .catch(error => {
+          console.error('Error creating tournament:', error);
+          subscriber.error(error);
+        });
+    });
+  }
+
+  // Update an existing tournament
+  updateTournament(tournamentId: string, tournamentData: Partial<Tournament>): Observable<void> {
+    return new Observable<void>(subscriber => {
+      const tournamentDocRef = doc(this.firestore, 'tournaments', tournamentId);
+      
+      updateDoc(tournamentDocRef, tournamentData)
+        .then(() => {
+          subscriber.next();
+          subscriber.complete();
+        })
+        .catch(error => {
+          console.error('Error updating tournament:', error);
+          subscriber.error(error);
+        });
+    });
+  }
+
+  // Start the tournament (change status from setup to qualifying)
+  startTournament(tournamentId: string): Observable<void> {
+    return this.updateTournament(tournamentId, { status: 'qualifying' });
+  }
+
+  // Advance tournament to next stage
+  advanceTournament(tournamentId: string, nextStage: 'heats' | 'final' | 'completed'): Observable<void> {
+    return this.updateTournament(tournamentId, { status: nextStage });
   }
 }

@@ -1,7 +1,18 @@
+/* Global layout */
+.sidenav-container {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #303030;
+}
+
 .spacer {
   flex: 1 1 auto;
 }
 
+/* Content area */
 .content-container {
   position: relative;
   padding: 20px;
@@ -26,10 +37,42 @@
   pointer-events: none; /* Ensures clicks pass through to content */
 }
 
+/* Toolbar */
 mat-toolbar {
   margin-bottom: 20px;
   background-color: #424242;
   color: #ffffff;
+  display: flex;
+  align-items: center;
+}
+
+.user-menu-button {
+  margin-left: 16px;
+}
+
+.site-selector {
+  width: 150px;
+  margin-right: 16px;
+  font-size: 14px;
+}
+
+/* Override Material styles for the toolbar form field */
+:host ::ng-deep .site-selector .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+:host ::ng-deep .site-selector .mat-mdc-text-field-wrapper {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+:host ::ng-deep .site-selector .mat-mdc-form-field-flex {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+:host ::ng-deep .site-selector .mat-mdc-form-field-infix {
+  padding: 8px 0;
+  min-height: 36px;
 }
 
 .race-count {
@@ -37,4 +80,82 @@ mat-toolbar {
   padding: 4px 8px;
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
+}
+
+/* Side Navigation */
+mat-sidenav {
+  width: 60px;
+  background-color: #212121;
+  transition: width 0.3s ease;
+  overflow: hidden;
+}
+
+mat-sidenav.expanded {
+  width: 200px;
+}
+
+.sidenav-header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  color: white;
+  font-size: 18px;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidenav-logo {
+  height: 32px;
+  width: 32px;
+  margin-right: 16px;
+}
+
+.sidenav-footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Navigation items */
+mat-nav-list {
+  padding-top: 16px;
+}
+
+mat-nav-list a {
+  height: 48px;
+  color: rgba(255, 255, 255, 0.7);
+  border-left: 3px solid transparent;
+}
+
+mat-nav-list a.active-link {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-left-color: #ff9800;
+}
+
+mat-nav-list a mat-icon {
+  margin-right: 16px;
+}
+
+mat-nav-list a span {
+  margin-left: 8px;
+}
+
+/* Sidenav content */
+mat-sidenav-content {
+  transition: margin-left 0.3s ease;
+}
+
+/* Only apply margin when sidenav is present (authenticated users) */
+mat-sidenav + mat-sidenav-content {
+  margin-left: 60px;
+}
+
+mat-sidenav.expanded + mat-sidenav-content {
+  margin-left: 200px;
 }

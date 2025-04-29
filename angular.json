@@ -37,21 +37,15 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": [],
-            "fileReplacements": [
-              {
-                "replace": "src/environments/environment.ts",
-                "with": "src/environments/environment.development.ts"
-              }
-            ]
+            "scripts": []
           },
           "configurations": {
             "production": {
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "1MB",
+                  "maximumError": "2MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -63,7 +57,7 @@
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.ts"
+                  "with": "src/environments/environment.prod.ts"
                 }
               ]
             },
@@ -117,5 +111,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": "f61503b2-2455-4dd2-b4b7-679f71248183"
   }
 }

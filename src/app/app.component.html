@@ -1,10 +1,91 @@
-
-<mat-toolbar>
-  <span>Five Site Racing Simulator Results</span>
-  <span class="spacer"></span>
-  <span class="race-count">Total Races: {{ totalRaces() }}</span>
-</mat-toolbar>
-
-<div class="content-container">
-  <router-outlet />
-</div>
+<mat-sidenav-container class="sidenav-container">
+  <!-- Side Navigation - Always shown but with filtered links -->
+  <mat-sidenav mode="side" opened [class.expanded]="sidenavExpanded()">
+    <div class="sidenav-header">
+      <img src="assets/race_logo.png" alt="Race Logo" class="sidenav-logo">
+      @if (sidenavExpanded()) {
+        <span>Racing</span>
+      }
+    </div>
+    
+    <mat-nav-list>
+      @for (item of visibleNavItems(); track item.path) {
+        <a mat-list-item [routerLink]="item.path" routerLinkActive="active-link">
+          <mat-icon>{{ item.icon }}</mat-icon>
+          @if (sidenavExpanded()) {
+            <span>{{ item.label }}</span>
+          }
+        </a>
+      }
+    </mat-nav-list>
+    
+    <div class="sidenav-footer">
+      <button mat-icon-button (click)="toggleSidenav()">
+        <mat-icon>{{ sidenavExpanded() ? 'chevron_left' : 'chevron_right' }}</mat-icon>
+      </button>
+    </div>
+  </mat-sidenav>
+  
+  <!-- Main Content -->
+  <mat-sidenav-content>
+    <mat-toolbar>
+      <span>Five Site Racing Simulator Results</span>
+      <span class="spacer"></span>
+      
+      <!-- Only show site selector when authenticated -->
+      @if (authService.isAuthenticated()) {
+        <!-- Site Selection Dropdown -->
+        <mat-form-field appearance="outline" class="site-selector">
+          <mat-select [value]="siteConfigService.currentSite()" (selectionChange)="onSiteChange($event.value)">
+            <mat-option [value]="null">All Sites</mat-option>
+            @for (site of availableSites(); track site) {
+              <mat-option [value]="site">{{ site }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        
+        <span class="race-count">Total Races: {{ totalRaces() }}</span>
+        
+        <!-- User Menu -->
+        <button mat-icon-button [matMenuTriggerFor]="userMenu" class="user-menu-button">
+          <mat-icon>account_circle</mat-icon>
+        </button>
+        <mat-menu #userMenu="matMenu">
+          @if (authService.currentUser()?.displayName) {
+            <span mat-menu-item disabled>
+              {{ authService.currentUser()?.displayName }}
+            </span>
+          }
+          @if (authService.currentUser()?.email) {
+            <span mat-menu-item disabled>
+              {{ authService.currentUser()?.email }}
+            </span>
+          }
+          <mat-divider></mat-divider>
+          
+          <!-- Admin link - only shown to admin users -->
+          @if (authService.isAdmin()) {
+            <a mat-menu-item routerLink="/admin">
+              <mat-icon>admin_panel_settings</mat-icon>
+              <span>Admin Dashboard</span>
+            </a>
+            <mat-divider></mat-divider>
+          }
+          
+          <button mat-menu-item (click)="logout()">
+            <mat-icon>exit_to_app</mat-icon>
+            <span>Logout</span>
+          </button>
+        </mat-menu>
+      } @else {
+        <!-- Login/Register buttons for unauthenticated users -->
+        <button mat-button routerLink="/login">Login</button>
+        <button mat-raised-button color="primary" routerLink="/register">Register</button>
+      }
+    </mat-toolbar>
+    
+    <div class="content-container">
+      <router-outlet />
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

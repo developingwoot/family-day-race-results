@@ -98,12 +98,8 @@ export class SiteStatsComponent implements OnDestroy, AfterViewInit {
   dataSource = new MatTableDataSource<SiteStats>([]);
   
   constructor() {
-    // Wait for authentication before loading data
-    effect(() => {
-      if (this.authService.isAuthenticated()) {
-        this.loadData();
-      }
-    });
+    // Always load data regardless of authentication status
+    this.loadData();
   }
   
   private loadData(): void {

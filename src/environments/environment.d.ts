@@ -9,7 +9,7 @@ export interface Environment {
     appId: string;
     measurementId?: string;
   };
-  auth: {
+  auth?: {
     email: string;
     password: string;
   };
