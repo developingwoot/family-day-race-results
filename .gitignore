@@ -114,5 +114,9 @@ testem.log
 .DS_Store
 Thumbs.db
 
+# Environment files
 .env
 src/environments/environment.development.ts
+
+# Build output
+/public

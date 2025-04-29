@@ -34,7 +34,12 @@ jobs:
           FIREBASE_AUTH_EMAIL: ${{ secrets.FIREBASE_AUTH_EMAIL }}
           FIREBASE_AUTH_PASSWORD: ${{ secrets.FIREBASE_AUTH_PASSWORD }}
       - name: Build
-        run: npm run build
+        run: npm run build -- --no-progress
+      - name: Copy build files to public directory
+        run: |
+          rm -rf public
+          mkdir -p public
+          cp -r dist/* public/
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
