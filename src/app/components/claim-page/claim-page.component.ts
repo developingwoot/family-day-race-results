@@ -85,58 +85,36 @@ interface ClaimToken {
               <p><strong>Best Lap:</strong> {{ formatTime(bestLap()) }}</p>
               <p><strong>Total Time:</strong> {{ formatTime(totalTime()) }}</p>
               
-              @if (authService.isAuthenticated()) {
-                <!-- User is logged in, show claim form -->
-                <form [formGroup]="claimForm" (ngSubmit)="submitClaim()">
-                  <h3>Your Information</h3>
-                  
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Your Name</mat-label>
-                    <input matInput formControlName="playerName" required [value]="authService.currentUser()?.displayName || ''">
-                    <mat-error *ngIf="claimForm.get('playerName')?.hasError('required')">
-                      Name is required
-                    </mat-error>
-                  </mat-form-field>
-                  
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Email</mat-label>
-                    <input matInput formControlName="playerEmail" type="email" [value]="authService.currentUser()?.email || ''" [readonly]="!!authService.currentUser()?.email">
-                    <mat-error *ngIf="claimForm.get('playerEmail')?.hasError('email')">
-                      Please enter a valid email address
-                    </mat-error>
-                  </mat-form-field>
-                  
-                  <div class="form-actions">
-                    <button mat-raised-button color="primary" type="submit" [disabled]="claimForm.invalid || submitting()">
-                      @if (submitting()) {
-                        <mat-spinner diameter="20"></mat-spinner>
-                      } @else {
-                        Claim This Race Time
-                      }
-                    </button>
-                  </div>
-                </form>
-              } @else {
-                <!-- User is not logged in, show login/register options -->
-                <div class="auth-required-section">
-                  <mat-divider></mat-divider>
-                  
-                  <div class="auth-message">
-                    <mat-icon>account_circle</mat-icon>
-                    <h3>Authentication Required</h3>
-                    <p>You need to sign in or create an account to claim this race time.</p>
-                  </div>
-                  
-                  <div class="auth-actions">
-                    <button mat-raised-button color="primary" [routerLink]="['/login']" [queryParams]="{returnUrl: '/claim', token: route.snapshot.queryParams['token']}">
-                      Sign In
-                    </button>
-                    <button mat-raised-button [routerLink]="['/register']" [queryParams]="{returnUrl: '/claim', token: route.snapshot.queryParams['token']}">
-                      Create Account
-                    </button>
-                  </div>
+              <!-- User is logged in, show claim form -->
+              <form [formGroup]="claimForm" (ngSubmit)="submitClaim()">
+                <h3>Your Information</h3>
+                
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Your Name</mat-label>
+                  <input matInput formControlName="playerName" required [value]="authService.currentUser()?.displayName || ''">
+                  <mat-error *ngIf="claimForm.get('playerName')?.hasError('required')">
+                    Name is required
+                  </mat-error>
+                </mat-form-field>
+                
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Email</mat-label>
+                  <input matInput formControlName="playerEmail" type="email" [value]="authService.currentUser()?.email || ''" [readonly]="!!authService.currentUser()?.email">
+                  <mat-error *ngIf="claimForm.get('playerEmail')?.hasError('email')">
+                    Please enter a valid email address
+                  </mat-error>
+                </mat-form-field>
+                
+                <div class="form-actions">
+                  <button mat-raised-button color="primary" type="submit" [disabled]="claimForm.invalid || submitting()">
+                    @if (submitting()) {
+                      <mat-spinner diameter="20"></mat-spinner>
+                    } @else {
+                      Claim This Race Time
+                    }
+                  </button>
                 </div>
-              }
+              </form>
             </div>
           }
         </mat-card-content>
@@ -149,11 +127,56 @@ interface ClaimToken {
       justify-content: center;
       padding: 20px;
       max-width: 100%;
+      box-sizing: border-box;
     }
     
     .claim-card {
       width: 100%;
       max-width: 500px;
+    }
+    
+    @media (max-width: 600px) {
+      .claim-container {
+        padding: 10px;
+      }
+      
+      .claim-card {
+        width: 100%;
+        max-width: none;
+      }
+      
+      mat-card-header {
+        padding: 12px;
+      }
+      
+      mat-card-content {
+        padding: 0 12px 12px;
+      }
+      
+      .loading-spinner {
+        padding: 20px;
+      }
+      
+      .error-message mat-icon,
+      .success-message mat-icon {
+        font-size: 36px;
+        height: 36px;
+        width: 36px;
+        margin-bottom: 12px;
+      }
+      
+      .race-details {
+        padding: 10px;
+        margin: 15px 0;
+      }
+      
+      .site-badge {
+        margin-bottom: 15px;
+      }
+      
+      button[type="submit"] {
+        width: 100%;
+      }
     }
     
     .loading-spinner {

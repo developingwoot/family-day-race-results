@@ -42,6 +42,22 @@ import { TournamentService } from '../../../services/tournament.service';
             </mat-card-actions>
           </mat-card>
           
+          <mat-card class="admin-card">
+            <mat-card-header>
+              <mat-card-title>Tournament Simulator</mat-card-title>
+            </mat-card-header>
+            
+            <mat-card-content>
+              <p>Simulate a tournament with mock data to test the tournament functionality.</p>
+            </mat-card-content>
+            
+            <mat-card-actions>
+              <a mat-raised-button color="primary" routerLink="/admin/tournament/simulator">
+                <mat-icon>science</mat-icon> Simulator
+              </a>
+            </mat-card-actions>
+          </mat-card>
+          
           @if (activeTournament(); as tournament) {
             <mat-card class="admin-card">
               <mat-card-header>

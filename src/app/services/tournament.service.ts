@@ -137,6 +137,36 @@ export class TournamentService {
       }
     });
     
+    // Convert nested date fields in heats array
+    if (tournament.heats && Array.isArray(tournament.heats)) {
+      tournament.heats = tournament.heats.map((heat: {
+        heatId: string;
+        heatNumber: number;
+        status: 'scheduled' | 'completed';
+        scheduledTime: any;
+        raceId?: string;
+        participants: any[];
+      }) => {
+        if (heat.scheduledTime) {
+          if (heat.scheduledTime instanceof Timestamp) {
+            heat.scheduledTime = heat.scheduledTime.toDate();
+          } else if (typeof heat.scheduledTime === 'string') {
+            heat.scheduledTime = new Date(heat.scheduledTime);
+          }
+        }
+        return heat;
+      });
+    }
+    
+    // Convert nested date field in finalHeat
+    if (tournament.finalHeat && tournament.finalHeat.scheduledTime) {
+      if (tournament.finalHeat.scheduledTime instanceof Timestamp) {
+        tournament.finalHeat.scheduledTime = tournament.finalHeat.scheduledTime.toDate();
+      } else if (typeof tournament.finalHeat.scheduledTime === 'string') {
+        tournament.finalHeat.scheduledTime = new Date(tournament.finalHeat.scheduledTime);
+      }
+    }
+    
     // Handle missing tournamentType field for existing tournaments
     if (!tournament.tournamentType) {
       // Infer tournament type based on dates

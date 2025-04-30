@@ -63,6 +63,38 @@ export class ClaimService {
     return this.claimedRacesCache.get(raceId)!.has(driverGuid);
   }
   
+  // Get player name for a claimed race
+  getClaimPlayerName(raceId: string, driverGuid: string): Observable<string | null> {
+    const claimedRacesCollection = collection(this.firestore, 'claimed-races');
+    const claimQuery = query(
+      claimedRacesCollection,
+      where('raceId', '==', raceId),
+      where('driverGuid', '==', driverGuid)
+    );
+    
+    return new Observable<string | null>(subscriber => {
+      const unsubscribe = onSnapshot(claimQuery, 
+        (snapshot) => {
+          if (snapshot.empty) {
+            subscriber.next(null);
+            return;
+          }
+          
+          // Get the first matching claim (should only be one)
+          const claim = snapshot.docs[0].data() as ClaimedRace;
+          subscriber.next(claim.playerName);
+        },
+        (error) => {
+          console.error('Firestore stream error:', error);
+          subscriber.error(error);
+        }
+      );
+      
+      // Cleanup when unsubscribing
+      return () => unsubscribe();
+    });
+  }
+  
   // Get claimed races for a specific race
   getClaimedRaces(raceId: string): Observable<ClaimedRace[]> {
     const claimedRacesCollection = collection(this.firestore, 'claimed-races');

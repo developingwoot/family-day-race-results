@@ -122,7 +122,14 @@ import { Subscription } from 'rxjs';
                         <td mat-cell *matCellDef="let result">
                           <div class="driver-cell">
                             <img [src]="getDriverIcon(result.DriverName)" class="driver-icon" alt="Driver Icon">
-                            <span>{{ result.DriverName }}</span>
+                            @if (isResultClaimed(race.id, result.DriverGuid) && getPlayerName(race.id, result.DriverGuid)) {
+                              <div class="driver-name">
+                                <span class="original-driver">{{ result.DriverName }}</span>
+                                <span class="claimed-by">Claimed by: {{ getPlayerName(race.id, result.DriverGuid) }}</span>
+                              </div>
+                            } @else {
+                              <span>{{ result.DriverName }}</span>
+                            }
                           </div>
                         </td>
                       </ng-container>
@@ -372,6 +379,21 @@ import { Subscription } from 'rxjs';
       width: 100%;
       margin-bottom: 15px;
     }
+    
+    .driver-name {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .original-driver {
+      font-weight: 500;
+    }
+    
+    .claimed-by {
+      font-size: 0.85em;
+      color: #4CAF50;
+      font-style: italic;
+    }
   `]
 })
 export class RaceHistoryComponent implements AfterViewInit, OnDestroy {
@@ -399,6 +421,9 @@ export class RaceHistoryComponent implements AfterViewInit, OnDestroy {
   
   private subscription?: Subscription;
   private claimSubscriptions = new Map<string, Subscription>();
+  
+  // Map to store player names for claimed races: raceId -> driverGuid -> playerName
+  private playerNames = new Map<string, Map<string, string>>();
   
   // Form for claiming races
   claimForm: FormGroup = this.fb.group({
@@ -532,8 +557,18 @@ export class RaceHistoryComponent implements AfterViewInit, OnDestroy {
     if (this.claimSubscriptions.has(raceId)) return;
     
     const subscription = this.claimService.getClaimedRaces(raceId).subscribe({
-      next: () => {
+      next: (claimedRaces) => {
         // The claim service will update its internal cache
+        
+        // Initialize the map for this race if it doesn't exist
+        if (!this.playerNames.has(raceId)) {
+          this.playerNames.set(raceId, new Map<string, string>());
+        }
+        
+        // Store player names for each claimed race
+        claimedRaces.forEach(claim => {
+          this.playerNames.get(raceId)?.set(claim.driverGuid, claim.playerName);
+        });
       },
       error: (error) => {
         console.error(`Error loading claim status for race ${raceId}:`, error);
@@ -541,6 +576,12 @@ export class RaceHistoryComponent implements AfterViewInit, OnDestroy {
     });
     
     this.claimSubscriptions.set(raceId, subscription);
+  }
+  
+  // Get player name for a claimed race
+  getPlayerName(raceId: string, driverGuid: string): string | null {
+    if (!this.isResultClaimed(raceId, driverGuid)) return null;
+    return this.playerNames.get(raceId)?.get(driverGuid) || null;
   }
   
   getValidParticipantCount(race: RaceData): number {

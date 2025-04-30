@@ -4,7 +4,7 @@ import { DataService } from "../../services/data.service";
 import { AuthService } from "../../services/auth.service";
 import { ClaimService } from "../../services/claim.service";
 import { RaceData, Result } from "../../models/race-data";
-import { catchError, EMPTY, Subscription } from "rxjs";
+import { catchError, EMPTY, Subscription, map } from "rxjs";
 import { MatTableModule, MatTableDataSource } from "@angular/material/table";
 import { MatSortModule, MatSort } from "@angular/material/sort";
 import { MatCardModule } from "@angular/material/card";
@@ -61,7 +61,16 @@ import { QRCodeComponent } from "angularx-qrcode";
                 <!-- Driver Column -->
                 <ng-container matColumnDef="driver">
                   <th mat-header-cell *matHeaderCellDef mat-sort-header> Driver </th>
-                  <td mat-cell *matCellDef="let result"> {{ result.DriverName }} </td>
+                  <td mat-cell *matCellDef="let result">
+                    @if (isResultClaimed(result) && getPlayerName(result)) {
+                      <div class="driver-name">
+                        <span class="original-driver">{{ result.DriverName }}</span>
+                        <span class="claimed-by">Claimed by: {{ getPlayerName(result) }}</span>
+                      </div>
+                    } @else {
+                      {{ result.DriverName }}
+                    }
+                  </td>
                 </ng-container>
                 
                 <!-- Best Lap Column -->
@@ -277,6 +286,21 @@ import { QRCodeComponent } from "angularx-qrcode";
     .loading {
       font-style: italic;
     }
+    
+    .driver-name {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .original-driver {
+      font-weight: 500;
+    }
+    
+    .claimed-by {
+      font-size: 0.85em;
+      color: #4CAF50;
+      font-style: italic;
+    }
   `]
 })
 export class MostRecentRaceComponent implements OnDestroy, AfterViewInit {
@@ -292,6 +316,9 @@ export class MostRecentRaceComponent implements OnDestroy, AfterViewInit {
   isLoading = signal(true);
   error = signal<string | null>(null);
   raceData = signal<RaceData | null>(null);
+  
+  // Map to store player names for claimed races
+  playerNames = new Map<string, string>();
   
   // QR code related signals
   unclaimedResults = signal<Result[]>([]);
@@ -383,9 +410,23 @@ export class MostRecentRaceComponent implements OnDestroy, AfterViewInit {
   private updateClaimStatus(raceId: string, results: Result[]): void {
     // Get claimed race info from the claim service
     this.claimService.getClaimedRaces(raceId).subscribe(claimedRaces => {
+      // Clear existing player names
+      this.playerNames.clear();
+      
+      // For each claimed race, fetch the player name
+      claimedRaces.forEach(claim => {
+        this.playerNames.set(claim.driverGuid, claim.playerName);
+      });
+      
       // Update unclaimed results
       this.updateUnclaimedResults();
     });
+  }
+  
+  // Get player name for a claimed race
+  getPlayerName(result: Result): string | null {
+    if (!this.isResultClaimed(result)) return null;
+    return this.playerNames.get(result.DriverGuid) || null;
   }
   
   private updateUnclaimedResults(): void {

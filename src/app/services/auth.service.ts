@@ -50,10 +50,17 @@ export class AuthService {
       // Only auto-login in development environment
       if (!environment.production && environment.auth?.email && environment.auth?.password) {
         console.log('Development mode: Attempting auto-login with environment credentials');
-        await this.login(environment.auth.email, environment.auth.password);
+        try {
+          await this.login(environment.auth.email, environment.auth.password);
+          console.log('Auto-login successful');
+        } catch (loginError) {
+          console.log('Auto-login failed, continuing as guest user');
+          // Silently continue without authentication
+        }
       }
     } catch (error) {
-      console.error('Auto-login failed:', error);
+      console.error('Auto-login process error:', error);
+      // Continue without authentication
     }
   }
 
