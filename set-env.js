@@ -36,7 +36,7 @@ if (missingVars.length > 0) {
 }
 
 // Create the environment.ts file content
-const environmentFile = `import { Environment } from './environment.d';
+let environmentFile = `import { Environment } from './environment.d';
 
 export const environment: Environment = {
   production: ${isProduction},
@@ -47,11 +47,19 @@ export const environment: Environment = {
     storageBucket: "${process.env.FIREBASE_STORAGE_BUCKET}",
     messagingSenderId: "${process.env.FIREBASE_MESSAGING_SENDER_ID}",
     appId: "${process.env.FIREBASE_APP_ID}"
-  },
+  }`;
+
+// Only include auth credentials in development mode
+if (!isProduction) {
+  environmentFile += `,
   auth: {
     email: "${process.env.FIREBASE_AUTH_EMAIL}",
     password: "${process.env.FIREBASE_AUTH_PASSWORD}"
-  }
+  }`;
+}
+
+// Close the environment object
+environmentFile += `
 };`;
 
 // Write the file
