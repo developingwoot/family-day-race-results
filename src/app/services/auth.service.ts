@@ -121,7 +121,7 @@ export class AuthService {
       
       // Fallback to email check for development/testing purposes
       // In production, you would remove this and rely solely on custom claims
-      const adminEmails = ['admin@example.com', 'admin@familyday.com', 'wooten.joseph@gmail.com'];
+      const adminEmails = ['developingwoot@gmail.com', 'wooten.joseph@gmail.com'];
       return adminEmails.includes(user.email || '');
       
     } catch (error) {
