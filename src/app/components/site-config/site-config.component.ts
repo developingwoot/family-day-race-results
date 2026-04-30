@@ -6,6 +6,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { SiteConfigService } from '../../services/site-config.service';
+import { SitesService } from '../../services/sites.service';
 
 @Component({
   selector: 'app-site-config',
@@ -29,7 +30,7 @@ import { SiteConfigService } from '../../services/site-config.service';
             <mat-label>Current Site</mat-label>
             <mat-select [(ngModel)]="selectedSite" (selectionChange)="onSiteChange()">
               <mat-option [value]="null">All Sites</mat-option>
-              @for (site of availableSites; track site) {
+              @for (site of sitesService.availableSites(); track site) {
                 <mat-option [value]="site">{{ site }}</mat-option>
               }
             </mat-select>
@@ -75,8 +76,8 @@ import { SiteConfigService } from '../../services/site-config.service';
 })
 export class SiteConfigComponent {
   private siteConfigService = inject(SiteConfigService);
-  
-  availableSites = ['Fishkill', 'Patterson', 'San Juan', 'Wallkill', 'Warwick'];
+  protected sitesService = inject(SitesService);
+
   selectedSite: string | null = this.siteConfigService.currentSite();
   
   onSiteChange(): void {

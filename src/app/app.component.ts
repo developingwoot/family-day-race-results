@@ -11,6 +11,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { CommonModule } from '@angular/common';
 import { DataService } from './services/data.service';
 import { SiteConfigService } from './services/site-config.service';
+import { SitesService } from './services/sites.service';
 import { AuthService } from './services/auth.service';
 import { Subscription } from 'rxjs';
 
@@ -39,19 +40,20 @@ export class AppComponent implements OnDestroy {
   
   private dataService = inject(DataService);
   protected siteConfigService = inject(SiteConfigService);
+  protected sitesService = inject(SitesService);
   protected authService = inject(AuthService);
   private router = inject(Router);
   private subscription?: Subscription;
-  
+
   totalRaces = signal<number>(0);
-  availableSites = signal<string[]>(['Fishkill', 'Patterson', 'San Juan', 'Wallkill', 'Warwick']);
   sidenavExpanded = signal(true);
   
   navItems = [
     { path: 'results', icon: 'home', label: 'Race Results', requiresAuth: false },
     { path: 'history', icon: 'history', label: 'Race History', requiresAuth: true },
     { path: 'tournament', icon: 'emoji_events', label: 'Tournament', requiresAuth: true },
-    { path: 'admin', icon: 'admin_panel_settings', label: 'Admin', requiresAuth: true, requiresAdmin: true }
+    { path: 'admin', icon: 'admin_panel_settings', label: 'Admin', requiresAuth: true, requiresAdmin: true },
+    { path: 'admin/sites', icon: 'location_on', label: 'Sites', requiresAuth: true, requiresAdmin: true }
   ];
   
   visibleNavItems = signal<Array<{path: string, icon: string, label: string, requiresAuth: boolean, requiresAdmin?: boolean}>>([]);

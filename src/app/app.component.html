@@ -38,7 +38,7 @@
         <mat-form-field appearance="outline" class="site-selector">
           <mat-select [value]="siteConfigService.currentSite()" (selectionChange)="onSiteChange($event.value)">
             <mat-option [value]="null">All Sites</mat-option>
-            @for (site of availableSites(); track site) {
+            @for (site of sitesService.availableSites(); track site) {
               <mat-option [value]="site">{{ site }}</mat-option>
             }
           </mat-select>

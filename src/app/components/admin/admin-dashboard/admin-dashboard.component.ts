@@ -136,16 +136,15 @@ import { TournamentService } from '../../../services/tournament.service';
             <mat-card-header>
               <mat-card-title>Site Configuration</mat-card-title>
             </mat-card-header>
-            
+
             <mat-card-content>
-              <p>Configure site settings, appearance, and behavior.</p>
+              <p>Add or remove race sites available across the application.</p>
             </mat-card-content>
-            
+
             <mat-card-actions>
-              <button mat-button disabled>
-                <mat-icon>settings</mat-icon> Site Settings
-              </button>
-              <p class="coming-soon">Coming soon</p>
+              <a mat-raised-button color="primary" routerLink="/admin/sites">
+                <mat-icon>location_on</mat-icon> Manage Sites
+              </a>
             </mat-card-actions>
           </mat-card>
         </div>

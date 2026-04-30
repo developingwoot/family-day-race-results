@@ -9,6 +9,7 @@ import { AdminDashboardComponent } from './components/admin/admin-dashboard/admi
 import { TournamentConfigComponent } from './components/admin/tournament-config/tournament-config.component';
 import { TournamentEditComponent } from './components/admin/tournament-edit/tournament-edit.component';
 import { TournamentSimulatorComponent } from './components/admin/tournament-simulator/tournament-simulator.component';
+import { AdminSitesComponent } from './components/admin/sites/admin-sites.component';
 import { HomeComponent } from './components/home/home.component';
 import { authGuard } from './guards/auth.guard';
 import { adminGuard } from './guards/admin/admin.guard';
@@ -37,5 +38,6 @@ export const routes: Routes = [
     {path: 'admin', component: AdminDashboardComponent, canActivate: [authGuard, adminGuard]},
     {path: 'admin/tournament/new', component: TournamentConfigComponent, canActivate: [authGuard, adminGuard]},
     {path: 'admin/tournament/edit/:id', component: TournamentEditComponent, canActivate: [authGuard, adminGuard]},
-    {path: 'admin/tournament/simulator', component: TournamentSimulatorComponent, canActivate: [authGuard, adminGuard]}
+    {path: 'admin/tournament/simulator', component: TournamentSimulatorComponent, canActivate: [authGuard, adminGuard]},
+    {path: 'admin/sites', component: AdminSitesComponent, canActivate: [authGuard, adminGuard]}
 ];

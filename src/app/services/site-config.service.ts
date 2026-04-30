@@ -1,19 +1,19 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { SitesService } from './sites.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SiteConfigService {
   private readonly SITE_CONFIG_KEY = 'race-site-config';
-  
-  // Use signal for reactive updates
+  private sitesService = inject(SitesService);
+
   readonly currentSite = signal<string | null>(null);
-  
+
   constructor() {
-    // Load site configuration from local storage
     this.loadSiteConfig();
   }
-  
+
   private loadSiteConfig(): void {
     const storedConfig = localStorage.getItem(this.SITE_CONFIG_KEY);
     if (storedConfig) {
@@ -24,7 +24,6 @@ export class SiteConfigService {
         console.error('Error parsing site config:', e);
       }
     } else {
-      // Check URL parameters if search string exists
       if (window.location.search) {
         try {
           const urlParams = new URLSearchParams(window.location.search);
@@ -38,22 +37,17 @@ export class SiteConfigService {
       }
     }
   }
-  
+
   setSite(site: string): void {
-    // Validate site
-    const validSites = ['Fishkill', 'Patterson', 'San Juan', 'Wallkill', 'Warwick'];
-    if (!validSites.includes(site)) {
+    const validSites = this.sitesService.availableSites();
+    if (validSites.length > 0 && !validSites.includes(site)) {
       console.error('Invalid site:', site);
       return;
     }
-    
-    // Save to local storage
     localStorage.setItem(this.SITE_CONFIG_KEY, JSON.stringify({ site }));
-    
-    // Update signal
     this.currentSite.set(site);
   }
-  
+
   clearSite(): void {
     localStorage.removeItem(this.SITE_CONFIG_KEY);
     this.currentSite.set(null);
