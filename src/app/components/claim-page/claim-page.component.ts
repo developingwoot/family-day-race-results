@@ -20,6 +20,11 @@ interface ClaimToken {
   driverGuid: string;
   site: string;
   timestamp: number;
+  // Embedded race details (present in newer QR codes)
+  driverName?: string;
+  bestLap?: number;
+  totalTime?: number;
+  position?: number;
 }
 
 @Component({
@@ -380,8 +385,17 @@ export class ClaimPageComponent implements OnInit, OnDestroy {
               return;
             }
             
-            // Load race details
-            this.loadRaceDetails(claimToken.raceId, claimToken.driverGuid);
+            // Use embedded race details from the token when available (avoids a Firestore read)
+            if (claimToken.driverName !== undefined && claimToken.bestLap !== undefined &&
+                claimToken.totalTime !== undefined && claimToken.position !== undefined) {
+              this.driverName.set(claimToken.driverName);
+              this.bestLap.set(claimToken.bestLap);
+              this.totalTime.set(claimToken.totalTime);
+              this.position.set(claimToken.position);
+              this.loading.set(false);
+            } else {
+              this.loadRaceDetails(claimToken.raceId, claimToken.driverGuid);
+            }
           },
           error: (err) => {
             console.error('Error checking claim status:', err);

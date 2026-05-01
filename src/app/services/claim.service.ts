@@ -43,17 +43,19 @@ export class ClaimService {
   private claimedRacesCache = new Map<string, Set<string>>();
   
   // Generate QR code URL for claiming a race
-  generateQRCodeUrl(raceId: string, driverGuid: string, site: string): string {
-    // Create a claim token that encodes race ID, driver GUID, and site
+  generateQRCodeUrl(raceId: string, driverGuid: string, site: string, raceDetails?: {
+    driverName: string;
+    bestLap: number;
+    totalTime: number;
+    position: number;
+  }): string {
     const claimToken = btoa(JSON.stringify({
       raceId,
       driverGuid,
       site,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      ...raceDetails
     }));
-    
-    // Generate URL to the claim page with the token
-    // This would be your deployed web app URL
     return `${window.location.origin}/claim?token=${claimToken}`;
   }
   

@@ -333,13 +333,18 @@ export class MostRecentRaceComponent implements OnDestroy, AfterViewInit {
   
   qrCodeUrl = computed(() => {
     const result = this.selectedResult();
-    if (!result || !this.raceData()) return '';
-    
-    // Generate QR code URL with race ID, driver ID, and site
+    const race = this.raceData();
+    if (!result || !race) return '';
+
+    const validResults = race.Result?.filter(r => r.BestLap !== 999999999 && r.TotalTime !== 0) || [];
+    const sortedResults = [...validResults].sort((a, b) => a.TotalTime - b.TotalTime);
+    const position = sortedResults.findIndex(r => r.DriverGuid === result.DriverGuid) + 1;
+
     return this.claimService.generateQRCodeUrl(
-      this.raceData()!.id,
+      race.id,
       result.DriverGuid,
-      this.currentSite() || ''
+      this.currentSite() || '',
+      { driverName: result.DriverName, bestLap: result.BestLap, totalTime: result.TotalTime, position }
     );
   });
   
