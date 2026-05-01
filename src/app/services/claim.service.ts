@@ -1,16 +1,13 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { 
-  Firestore, 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
+import { Injectable, inject } from '@angular/core';
+import {
+  Firestore,
+  collection,
+  query,
+  where,
   onSnapshot,
-  doc,
-  setDoc,
-  serverTimestamp
 } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
+import { Functions, httpsCallable } from '@angular/fire/functions';
+import { Observable, from } from 'rxjs';
 
 // Interfaces for claimed races
 export interface ClaimedRace {
@@ -38,8 +35,8 @@ export interface ClaimRaceData {
 })
 export class ClaimService {
   private firestore: Firestore = inject(Firestore);
-  
-  // Cache of claimed races
+  private functions: Functions = inject(Functions);
+
   private claimedRacesCache = new Map<string, Set<string>>();
   
   // Generate QR code URL for claiming a race
@@ -141,40 +138,16 @@ export class ClaimService {
     });
   }
   
-  // Claim a race result
   claimRace(claimData: ClaimRaceData): Observable<string> {
-    return new Observable<string>(subscriber => {
-      // Create a new document in the claimed-races collection
-      const claimedRacesCollection = collection(this.firestore, 'claimed-races');
-      const newClaimRef = doc(claimedRacesCollection);
-      
-      const claimDoc = {
-        id: newClaimRef.id,
-        raceId: claimData.raceId,
-        driverGuid: claimData.driverGuid,
-        playerName: claimData.playerName,
-        playerEmail: claimData.playerEmail || null,
-        site: claimData.site,
-        claimedAt: serverTimestamp(),
-        qualifying: true, // Default to qualifying
-        tournamentId: null // Will be set if part of a tournament
-      };
-      
-      setDoc(newClaimRef, claimDoc)
-        .then(() => {
-          // Update cache
-          if (!this.claimedRacesCache.has(claimData.raceId)) {
-            this.claimedRacesCache.set(claimData.raceId, new Set<string>());
-          }
-          this.claimedRacesCache.get(claimData.raceId)!.add(claimData.driverGuid);
-          
-          subscriber.next(newClaimRef.id);
-          subscriber.complete();
-        })
-        .catch(error => {
-          console.error('Error claiming race:', error);
-          subscriber.error(error);
-        });
-    });
+    const fn = httpsCallable<ClaimRaceData, { id: string }>(this.functions, 'claimRace');
+    return from(
+      fn(claimData).then(result => {
+        if (!this.claimedRacesCache.has(claimData.raceId)) {
+          this.claimedRacesCache.set(claimData.raceId, new Set<string>());
+        }
+        this.claimedRacesCache.get(claimData.raceId)!.add(claimData.driverGuid);
+        return result.data.id;
+      })
+    );
   }
 }

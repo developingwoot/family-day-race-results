@@ -5,7 +5,6 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
   signOut,
-  signInAnonymously,
   user,
   User,
   getIdTokenResult
@@ -63,10 +62,6 @@ export class AuthService {
       console.error('Auto-login process error:', error);
       // Continue without authentication
     }
-  }
-
-  async signInAnonymously(): Promise<void> {
-    await signInAnonymously(this.auth);
   }
 
   async login(email: string, password: string): Promise<void> {

@@ -452,21 +452,10 @@ export class ClaimPageComponent implements OnInit, OnDestroy {
     this.subscriptions.push(raceDetailsSub);
   }
   
-  async submitClaim(): Promise<void> {
+  submitClaim(): void {
     if (this.claimForm.invalid) return;
 
     this.submitting.set(true);
-
-    if (!this.authService.isAuthenticated()) {
-      try {
-        await this.authService.signInAnonymously();
-      } catch (err) {
-        console.error('Anonymous sign-in failed:', err);
-        this.error.set('Unable to submit claim. Please try again.');
-        this.submitting.set(false);
-        return;
-      }
-    }
 
     const claimData: ClaimRaceData = {
       raceId: this.raceId() || '',
@@ -483,7 +472,7 @@ export class ClaimPageComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Error claiming race:', err);
-        this.error.set('Error claiming race. Please try again.');
+        this.error.set(err?.message || 'Error claiming race. Please try again.');
         this.submitting.set(false);
       }
     });
