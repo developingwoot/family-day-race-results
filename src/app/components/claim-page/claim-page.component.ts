@@ -91,15 +91,15 @@ interface ClaimToken {
                 
                 <mat-form-field appearance="outline" class="full-width">
                   <mat-label>Your Name</mat-label>
-                  <input matInput formControlName="playerName" required [value]="authService.currentUser()?.displayName || ''">
+                  <input matInput formControlName="playerName">
                   <mat-error *ngIf="claimForm.get('playerName')?.hasError('required')">
                     Name is required
                   </mat-error>
                 </mat-form-field>
-                
+
                 <mat-form-field appearance="outline" class="full-width">
                   <mat-label>Email</mat-label>
-                  <input matInput formControlName="playerEmail" type="email" [value]="authService.currentUser()?.email || ''" [readonly]="!!authService.currentUser()?.email">
+                  <input matInput formControlName="playerEmail" type="email">
                   <mat-error *ngIf="claimForm.get('playerEmail')?.hasError('email')">
                     Please enter a valid email address
                   </mat-error>
@@ -355,10 +355,23 @@ export class ClaimPageComponent implements OnInit, OnDestroy {
         this.raceId.set(claimToken.raceId);
         this.driverGuid.set(claimToken.driverGuid);
         this.site.set(claimToken.site);
-        
+
+        // Pre-populate form from logged-in user
+        const user = this.authService.currentUser();
+        if (user) {
+          this.claimForm.patchValue({
+            playerName: user.displayName || '',
+            playerEmail: user.email || ''
+          });
+          if (user.email) {
+            this.claimForm.get('playerEmail')?.disable();
+          }
+        }
+
         // Check if already claimed
         const claimedRacesSub = this.claimService.getClaimedRaces(claimToken.raceId).subscribe({
           next: (claimedRaces) => {
+            if (this.claimed()) return;
             const isClaimed = this.claimService.isResultClaimed(claimToken.raceId, claimToken.driverGuid);
             
             if (isClaimed) {
@@ -447,7 +460,7 @@ export class ClaimPageComponent implements OnInit, OnDestroy {
       raceId: this.raceId() || '',
       driverGuid: this.driverGuid() || '',
       playerName: this.claimForm.value.playerName,
-      playerEmail: this.claimForm.value.playerEmail,
+      playerEmail: this.claimForm.getRawValue().playerEmail,
       site: this.site()
     };
     
