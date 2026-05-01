@@ -1,10 +1,10 @@
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
 admin.initializeApp();
 
-exports.claimRace = onCall({ cors: true }, async (request) => {
-  const { raceId, driverGuid, playerName, site } = request.data;
+exports.claimRace = onCall({cors: true}, async (request) => {
+  const {raceId, driverGuid, playerName, site} = request.data;
 
   if (!raceId || !driverGuid || !playerName || !site) {
     throw new HttpsError("invalid-argument", "Missing required fields.");
@@ -14,12 +14,15 @@ exports.claimRace = onCall({ cors: true }, async (request) => {
 
   // Prevent duplicate claims for the same driver in the same race
   const existing = await db.collection("claimed-races")
-    .where("raceId", "==", raceId)
-    .where("driverGuid", "==", driverGuid)
-    .get();
+      .where("raceId", "==", raceId)
+      .where("driverGuid", "==", driverGuid)
+      .get();
 
   if (!existing.empty) {
-    throw new HttpsError("already-exists", "This race time has already been claimed.");
+    throw new HttpsError(
+        "already-exists",
+        "This race time has already been claimed.",
+    );
   }
 
   const newRef = db.collection("claimed-races").doc();
@@ -35,5 +38,5 @@ exports.claimRace = onCall({ cors: true }, async (request) => {
     tournamentId: null,
   });
 
-  return { id: newRef.id };
+  return {id: newRef.id};
 });
