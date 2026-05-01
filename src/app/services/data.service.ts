@@ -198,15 +198,18 @@ export class DataService {
       const racesCollection = collection(this.firestore, 'race-data');
       const q = query(
         racesCollection,
-        where('Site', '==', site),
         orderBy('uploadedAt', 'desc'),
-        limit(1)
+        limit(50)
       );
       const unsubscribe = onSnapshot(q,
         snapshot => {
           if (snapshot.empty) { subscriber.next(null); return; }
-          const d = snapshot.docs[0];
-          subscriber.next({ id: d.id, ...d.data() } as RaceData);
+          const match = snapshot.docs.find(d => {
+            const data = d.data();
+            const results: any[] = data['Result'] || [];
+            return results.some(r => (r.DriverName as string)?.startsWith(site));
+          });
+          subscriber.next(match ? { id: match.id, ...match.data() } as RaceData : null);
         },
         error => subscriber.error(error)
       );
