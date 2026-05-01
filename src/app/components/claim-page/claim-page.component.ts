@@ -102,14 +102,6 @@ interface ClaimToken {
                   </mat-error>
                 </mat-form-field>
 
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Email</mat-label>
-                  <input matInput formControlName="playerEmail" type="email">
-                  <mat-error *ngIf="claimForm.get('playerEmail')?.hasError('email')">
-                    Please enter a valid email address
-                  </mat-error>
-                </mat-form-field>
-                
                 <div class="form-actions">
                   <button mat-raised-button color="primary" type="submit" [disabled]="claimForm.invalid || submitting()">
                     @if (submitting()) {
@@ -320,8 +312,7 @@ export class ClaimPageComponent implements OnInit, OnDestroy {
   playerName = signal('');
   
   claimForm: FormGroup = this.fb.group({
-    playerName: ['', Validators.required],
-    playerEmail: ['', Validators.email]
+    playerName: ['', Validators.required]
   });
   
   // Subscriptions
@@ -365,12 +356,8 @@ export class ClaimPageComponent implements OnInit, OnDestroy {
         const user = this.authService.currentUser();
         if (user) {
           this.claimForm.patchValue({
-            playerName: user.displayName || '',
-            playerEmail: user.email || ''
+            playerName: user.displayName || ''
           });
-          if (user.email) {
-            this.claimForm.get('playerEmail')?.disable();
-          }
         }
 
         // Check if already claimed
@@ -465,21 +452,31 @@ export class ClaimPageComponent implements OnInit, OnDestroy {
     this.subscriptions.push(raceDetailsSub);
   }
   
-  submitClaim(): void {
+  async submitClaim(): Promise<void> {
     if (this.claimForm.invalid) return;
-    
+
     this.submitting.set(true);
-    
+
+    if (!this.authService.isAuthenticated()) {
+      try {
+        await this.authService.signInAnonymously();
+      } catch (err) {
+        console.error('Anonymous sign-in failed:', err);
+        this.error.set('Unable to submit claim. Please try again.');
+        this.submitting.set(false);
+        return;
+      }
+    }
+
     const claimData: ClaimRaceData = {
       raceId: this.raceId() || '',
       driverGuid: this.driverGuid() || '',
       playerName: this.claimForm.value.playerName,
-      playerEmail: this.claimForm.getRawValue().playerEmail,
       site: this.site()
     };
-    
+
     const claimRaceSub = this.claimService.claimRace(claimData).subscribe({
-      next: (claimId) => {
+      next: () => {
         this.playerName.set(claimData.playerName);
         this.claimed.set(true);
         this.submitting.set(false);
@@ -490,7 +487,7 @@ export class ClaimPageComponent implements OnInit, OnDestroy {
         this.submitting.set(false);
       }
     });
-    
+
     this.subscriptions.push(claimRaceSub);
   }
   

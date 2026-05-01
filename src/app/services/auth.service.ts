@@ -1,11 +1,12 @@
 import { Injectable, inject, signal, runInInjectionContext, Injector } from '@angular/core';
-import { 
-  Auth, 
-  signInWithEmailAndPassword, 
+import {
+  Auth,
+  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
-  signOut, 
-  user, 
+  signOut,
+  signInAnonymously,
+  user,
   User,
   getIdTokenResult
 } from '@angular/fire/auth';
@@ -62,6 +63,10 @@ export class AuthService {
       console.error('Auto-login process error:', error);
       // Continue without authentication
     }
+  }
+
+  async signInAnonymously(): Promise<void> {
+    await signInAnonymously(this.auth);
   }
 
   async login(email: string, password: string): Promise<void> {
