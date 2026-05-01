@@ -371,7 +371,7 @@ export class ClaimPageComponent implements OnInit, OnDestroy {
         // Check if already claimed
         const claimedRacesSub = this.claimService.getClaimedRaces(claimToken.raceId).subscribe({
           next: (claimedRaces) => {
-            if (this.claimed()) return;
+            if (this.claimed() || this.submitting()) return;
             const isClaimed = this.claimService.isResultClaimed(claimToken.raceId, claimToken.driverGuid);
             
             if (isClaimed) {
