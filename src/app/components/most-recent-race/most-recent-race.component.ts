@@ -3,6 +3,7 @@ import { Component, inject, OnDestroy, signal, ViewChild, AfterViewInit, effect,
 import { DataService } from "../../services/data.service";
 import { AuthService } from "../../services/auth.service";
 import { ClaimService } from "../../services/claim.service";
+import { SitesService } from "../../services/sites.service";
 import { RaceData, Result } from "../../models/race-data";
 import { catchError, EMPTY, Subscription, map } from "rxjs";
 import { MatTableModule, MatTableDataSource } from "@angular/material/table";
@@ -309,6 +310,7 @@ export class MostRecentRaceComponent implements OnDestroy, AfterViewInit {
   private raceService = inject(DataService);
   private authService = inject(AuthService);
   private claimService = inject(ClaimService);
+  protected sitesService = inject(SitesService);
   private subscription?: Subscription;
   
   @ViewChild(MatSort) sort!: MatSort;
@@ -345,19 +347,19 @@ export class MostRecentRaceComponent implements OnDestroy, AfterViewInit {
   dataSource = new MatTableDataSource<Result>([]);
   
   constructor() {
-    // Always load data regardless of authentication status
-    this.loadData();
-    
-    // Filter results by site if a site is specified
     effect(() => {
-      if (this.raceData() && this.currentSite()) {
-        this.filterResultsBySite();
-      }
+      const site = this.currentSite();
+      this.subscription?.unsubscribe();
+      this.isLoading.set(true);
+      this.loadData(site ?? undefined);
     });
   }
-  
-  private loadData(): void {
-    this.subscription = this.raceService.getMostRecentRaceStream()
+
+  private loadData(site?: string): void {
+    const stream = site
+      ? this.raceService.getMostRecentRaceBySiteStream(site)
+      : this.raceService.getMostRecentRaceStream();
+    this.subscription = stream
       .pipe(
         catchError(error => {
           console.error('Error in stream:', error);
@@ -390,21 +392,6 @@ export class MostRecentRaceComponent implements OnDestroy, AfterViewInit {
           this.isLoading.set(false);
         }
       });
-  }
-  
-  private filterResultsBySite(): void {
-    if (!this.raceData()?.Result) return;
-    
-    // Show all valid results regardless of site
-    const validResults = this.raceData()!.Result.filter(result => 
-      result.BestLap !== 999999999 && 
-      result.TotalTime !== 0
-    );
-    
-    this.dataSource.data = validResults;
-    
-    // Update unclaimed results
-    this.updateUnclaimedResults();
   }
   
   private updateClaimStatus(raceId: string, results: Result[]): void {
@@ -498,37 +485,11 @@ export class MostRecentRaceComponent implements OnDestroy, AfterViewInit {
   }
   
   getDriverIcon(driverName: string): string {
-    // Available icons: Fishkill_Icon.png, Patterson_Icon.png, San_Juan_Icon.png, Wallkill_Icon.png, Warwick_Icon.png
-    type IconKey = 'Fishkill' | 'Patterson' | 'San Juan' | 'Wallkill' | 'Warwick';
-    const iconPrefixes: IconKey[] = ['Fishkill', 'Patterson', 'San Juan', 'Wallkill', 'Warwick'];
-    const iconFileNames: Record<IconKey, string> = {
-      'Fishkill': 'Fishkill_Icon.png',
-      'Patterson': 'Patterson_Icon.png',
-      'San Juan': 'San_Juan_Icon.png',
-      'Wallkill': 'Wallkill_Icon.png',
-      'Warwick': 'Warwick_Icon.png'
-    };
-    
-    // Check if the driver name starts with any of the icon prefixes
-    for (const prefix of iconPrefixes) {
-      if (driverName.startsWith(prefix)) {
-        return `assets/${iconFileNames[prefix]}`;
-      }
-    }
-    
-    // Default icon if no match is found
-    return 'assets/helmet.jpg';
+    const match = this.sitesService.availableSites().find((site: string) => driverName.startsWith(site));
+    return match ? `assets/${match.replace(/ /g, '_')}_Icon.png` : 'assets/helmet.jpg';
   }
-  
+
   getSiteIcon(siteName: string): string {
-    const iconFileNames: Record<string, string> = {
-      'Fishkill': 'Fishkill_Icon.png',
-      'Patterson': 'Patterson_Icon.png',
-      'San Juan': 'San_Juan_Icon.png',
-      'Wallkill': 'Wallkill_Icon.png',
-      'Warwick': 'Warwick_Icon.png'
-    };
-    
-    return `assets/${iconFileNames[siteName] || 'helmet.jpg'}`;
+    return `assets/${siteName.replace(/ /g, '_')}_Icon.png`;
   }
 }

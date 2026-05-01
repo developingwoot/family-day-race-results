@@ -193,6 +193,27 @@ export class DataService {
     return null;
   }
   
+  getMostRecentRaceBySiteStream(site: string): Observable<RaceData | null> {
+    return new Observable<RaceData | null>(subscriber => {
+      const racesCollection = collection(this.firestore, 'race-data');
+      const q = query(
+        racesCollection,
+        where('Site', '==', site),
+        orderBy('uploadedAt', 'desc'),
+        limit(1)
+      );
+      const unsubscribe = onSnapshot(q,
+        snapshot => {
+          if (snapshot.empty) { subscriber.next(null); return; }
+          const d = snapshot.docs[0];
+          subscriber.next({ id: d.id, ...d.data() } as RaceData);
+        },
+        error => subscriber.error(error)
+      );
+      return () => unsubscribe();
+    });
+  }
+
   // Get a specific race by ID
   getRaceById(raceId: string): Observable<RaceData | null> {
     return new Observable<RaceData | null>(subscriber => {
