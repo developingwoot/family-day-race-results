@@ -46,11 +46,10 @@ interface SiteRecord {
                 <div class="site-record">
                   <div class="site-header">
                     <img [src]="getDriverIcon(record.siteName)" class="site-icon" alt="Site Icon">
-                    <span class="site-name">{{ record.siteName }}</span>
+                    <span class="site-name">{{ record.siteName }}{{ record.bestLapDriver ? ' - ' + extractPersonName(record.bestLapDriver) : '' }}</span>
                   </div>
                   <div class="site-details">
                     <span class="site-time">{{ formatTime(record.bestLapTime) }}</span>
-                    <span class="site-driver">{{ record.bestLapDriver }}</span>
                   </div>
                 </div>
               }
@@ -83,11 +82,10 @@ interface SiteRecord {
                 <div class="site-record">
                   <div class="site-header">
                     <img [src]="getDriverIcon(record.siteName)" class="site-icon" alt="Site Icon">
-                    <span class="site-name">{{ record.siteName }}</span>
+                    <span class="site-name">{{ record.siteName }}{{ record.bestRaceDriver ? ' - ' + extractPersonName(record.bestRaceDriver) : '' }}</span>
                   </div>
                   <div class="site-details">
                     <span class="site-time">{{ formatTime(record.bestRaceTime) }}</span>
-                    <span class="site-driver">{{ record.bestRaceDriver }}</span>
                   </div>
                 </div>
               }
@@ -390,6 +388,17 @@ export class BestRecordsComponent implements OnDestroy {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
   }
   
+  extractPersonName(driverName: string | null): string {
+    if (!driverName) return '';
+    const siteNames = ['Fishkill', 'Wallkill', 'Warwick', 'San Juan', 'Patterson'];
+    for (const site of siteNames) {
+      if (driverName.startsWith(site)) {
+        return driverName.slice(site.length).trim();
+      }
+    }
+    return driverName;
+  }
+
   extractSiteName(driverName: string | null): string | null {
     if (!driverName) return null;
     
