@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, inject, OnDestroy, signal, effect } from "@angular/core";
 import { DataService } from "../../services/data.service";
 import { AuthService } from "../../services/auth.service";
+import { ClaimService } from "../../services/claim.service";
 import { RaceData, Result } from "../../models/race-data";
 import { catchError, EMPTY, Subscription } from "rxjs";
 import { MatCardModule } from "@angular/material/card";
@@ -11,8 +12,14 @@ interface SiteRecord {
   siteName: string;
   bestLapTime: number;
   bestLapDriver: string;
+  bestLapDriverGuid: string;
+  bestLapRaceId: string;
+  bestLapClaimedName?: string | null;
   bestRaceTime: number;
   bestRaceDriver: string;
+  bestRaceDriverGuid: string;
+  bestRaceRaceId: string;
+  bestRaceClaimedName?: string | null;
 }
 
 @Component({
@@ -36,6 +43,7 @@ interface SiteRecord {
             <div class="best-details">
               <p class="record-time">{{ formatTime(bestLapTime()) }}</p>
               <p class="driver-name" *ngIf="bestLapDriver()">{{ bestLapDriver() }}</p>
+              <p class="claimed-by" *ngIf="bestLapClaimedName()">Claimed by: {{ bestLapClaimedName() }}</p>
             </div>
           </div>
           
@@ -50,6 +58,7 @@ interface SiteRecord {
                   </div>
                   <div class="site-details">
                     <span class="site-time">{{ formatTime(record.bestLapTime) }}</span>
+                    <span class="claimed-by" *ngIf="record.bestLapClaimedName">Claimed by: {{ record.bestLapClaimedName }}</span>
                   </div>
                 </div>
               }
@@ -72,6 +81,7 @@ interface SiteRecord {
             <div class="best-details">
               <p class="record-time">{{ formatTime(bestRaceTime()) }}</p>
               <p class="driver-name" *ngIf="bestRaceDriver()">{{ bestRaceDriver() }}</p>
+              <p class="claimed-by" *ngIf="bestRaceClaimedName()">Claimed by: {{ bestRaceClaimedName() }}</p>
             </div>
           </div>
           
@@ -86,6 +96,7 @@ interface SiteRecord {
                   </div>
                   <div class="site-details">
                     <span class="site-time">{{ formatTime(record.bestRaceTime) }}</span>
+                    <span class="claimed-by" *ngIf="record.bestRaceClaimedName">Claimed by: {{ record.bestRaceClaimedName }}</span>
                   </div>
                 </div>
               }
@@ -153,6 +164,14 @@ interface SiteRecord {
       margin: 0;
       font-size: 16px;
       color: #666;
+    }
+
+    .claimed-by {
+      display: block;
+      font-size: 0.85em;
+      color: #4CAF50;
+      font-style: italic;
+      margin: 0;
     }
     
     /* Site-specific records styling */
@@ -227,13 +246,16 @@ interface SiteRecord {
 export class BestRecordsComponent implements OnDestroy {
   private dataService = inject(DataService);
   private authService = inject(AuthService);
+  private claimService = inject(ClaimService);
   private subscription?: Subscription;
-  
+
   bestLapTime = signal<number | null>(null);
   bestLapDriver = signal<string | null>(null);
-  
+  bestLapClaimedName = signal<string | null>(null);
+
   bestRaceTime = signal<number | null>(null);
   bestRaceDriver = signal<string | null>(null);
+  bestRaceClaimedName = signal<string | null>(null);
   
   // Site-specific records
   siteRecords = signal<SiteRecord[]>([]);
@@ -273,15 +295,25 @@ export class BestRecordsComponent implements OnDestroy {
     let bestLap = Number.MAX_VALUE;
     let bestRace = Number.MAX_VALUE;
     let bestLapDriverName: string | null = null;
+    let bestLapDriverGuid: string | null = null;
+    let bestLapRaceId: string | null = null;
     let bestRaceDriverName: string | null = null;
-    
+    let bestRaceDriverGuid: string | null = null;
+    let bestRaceRaceId: string | null = null;
+
+    const emptyRecord = (siteName: string): SiteRecord => ({
+      siteName,
+      bestLapTime: Number.MAX_VALUE, bestLapDriver: '', bestLapDriverGuid: '', bestLapRaceId: '',
+      bestRaceTime: Number.MAX_VALUE, bestRaceDriver: '', bestRaceDriverGuid: '', bestRaceRaceId: ''
+    });
+
     // Initialize site-specific records
     const siteRecords: Record<string, SiteRecord> = {
-      'Fishkill': { siteName: 'Fishkill', bestLapTime: Number.MAX_VALUE, bestLapDriver: '', bestRaceTime: Number.MAX_VALUE, bestRaceDriver: '' },
-      'Wallkill': { siteName: 'Wallkill', bestLapTime: Number.MAX_VALUE, bestLapDriver: '', bestRaceTime: Number.MAX_VALUE, bestRaceDriver: '' },
-      'Warwick': { siteName: 'Warwick', bestLapTime: Number.MAX_VALUE, bestLapDriver: '', bestRaceTime: Number.MAX_VALUE, bestRaceDriver: '' },
-      'San Juan': { siteName: 'San Juan', bestLapTime: Number.MAX_VALUE, bestLapDriver: '', bestRaceTime: Number.MAX_VALUE, bestRaceDriver: '' },
-      'Patterson': { siteName: 'Patterson', bestLapTime: Number.MAX_VALUE, bestLapDriver: '', bestRaceTime: Number.MAX_VALUE, bestRaceDriver: '' }
+      'Fishkill': emptyRecord('Fishkill'),
+      'Wallkill': emptyRecord('Wallkill'),
+      'Warwick': emptyRecord('Warwick'),
+      'San Juan': emptyRecord('San Juan'),
+      'Patterson': emptyRecord('Patterson')
     };
     
     // Minimum acceptable times
@@ -310,52 +342,85 @@ export class BestRecordsComponent implements OnDestroy {
           if (result.BestLap < bestLap) {
             bestLap = result.BestLap;
             bestLapDriverName = result.DriverName;
+            bestLapDriverGuid = result.DriverGuid;
+            bestLapRaceId = race.id;
           }
-          
+
           // Update site-specific best lap
           const siteName = this.extractSiteName(result.DriverName);
           if (siteName && siteRecords[siteName] && result.BestLap < siteRecords[siteName].bestLapTime) {
             siteRecords[siteName].bestLapTime = result.BestLap;
             siteRecords[siteName].bestLapDriver = result.DriverName;
+            siteRecords[siteName].bestLapDriverGuid = result.DriverGuid;
+            siteRecords[siteName].bestLapRaceId = race.id;
           }
         }
-        
+
         // For race time, check if driver completed all required laps
         // Also skip results with TotalTime of 0 (didn't participate)
         if (result.TotalTime !== 0 && result.TotalTime >= MIN_RACE_TIME) {
           // Get all laps for this driver
           const driverLaps = race.Laps.filter(lap => lap.DriverGuid === result.DriverGuid);
-          
+
           // Count how many laps this driver completed
           const lapCount = driverLaps.length;
-          
+
           // Check if all laps have 0 cuts
           const allLapsHaveZeroCuts = driverLaps.every(lap => lap.Cuts === 0);
-          
+
           // Only consider drivers who completed all required laps AND have no cuts on any lap
           if (lapCount >= race.RaceLaps && allLapsHaveZeroCuts) {
             // Update overall best race time
             if (result.TotalTime < bestRace) {
               bestRace = result.TotalTime;
               bestRaceDriverName = result.DriverName;
+              bestRaceDriverGuid = result.DriverGuid;
+              bestRaceRaceId = race.id;
             }
-            
+
             // Update site-specific best race time
             const siteName = this.extractSiteName(result.DriverName);
             if (siteName && siteRecords[siteName] && result.TotalTime < siteRecords[siteName].bestRaceTime) {
               siteRecords[siteName].bestRaceTime = result.TotalTime;
               siteRecords[siteName].bestRaceDriver = result.DriverName;
+              siteRecords[siteName].bestRaceDriverGuid = result.DriverGuid;
+              siteRecords[siteName].bestRaceRaceId = race.id;
             }
           }
         }
       });
     });
-    
+
     this.bestLapTime.set(bestLap !== Number.MAX_VALUE ? bestLap : null);
     this.bestLapDriver.set(bestLapDriverName);
-    
+    this.bestLapClaimedName.set(null);
+
     this.bestRaceTime.set(bestRace !== Number.MAX_VALUE ? bestRace : null);
     this.bestRaceDriver.set(bestRaceDriverName);
+    this.bestRaceClaimedName.set(null);
+
+    // Fetch claimed names for overall winners
+    if (bestLapRaceId && bestLapDriverGuid) {
+      this.claimService.getClaimPlayerName(bestLapRaceId, bestLapDriverGuid)
+        .subscribe((name: string | null) => this.bestLapClaimedName.set(name));
+    }
+    if (bestRaceRaceId && bestRaceDriverGuid) {
+      this.claimService.getClaimPlayerName(bestRaceRaceId, bestRaceDriverGuid)
+        .subscribe((name: string | null) => this.bestRaceClaimedName.set(name));
+    }
+
+    // Fetch claimed names for site records
+    const allRecords = Object.values(siteRecords);
+    allRecords.forEach(record => {
+      if (record.bestLapRaceId && record.bestLapDriverGuid) {
+        this.claimService.getClaimPlayerName(record.bestLapRaceId, record.bestLapDriverGuid)
+          .subscribe((name: string | null) => { record.bestLapClaimedName = name; });
+      }
+      if (record.bestRaceRaceId && record.bestRaceDriverGuid) {
+        this.claimService.getClaimPlayerName(record.bestRaceRaceId, record.bestRaceDriverGuid)
+          .subscribe((name: string | null) => { record.bestRaceClaimedName = name; });
+      }
+    });
     
     // Filter out the top site from site records
     const filteredSiteRecords = Object.values(siteRecords).filter(record => {

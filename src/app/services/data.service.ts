@@ -103,63 +103,40 @@ export class DataService {
   }
 
   private calculateSiteStats(races: RaceData[]): SiteStats[] {
-    // Initialize stats for each driver
-    const siteStats: Record<string, SiteStats> = {
-      'Fishkill': this.initSiteStats('Fishkill'),
-      'Wallkill': this.initSiteStats('Wallkill'),
-      'Warwick': this.initSiteStats('Warwick'),
-      'San Juan': this.initSiteStats('San Juan'),
-      'Patterson': this.initSiteStats('Patterson')
-    };
-    
+    const siteNames = this.discoverSiteNames(races);
+    const siteStats: Record<string, SiteStats> = {};
+    siteNames.forEach(site => { siteStats[site] = this.initSiteStats(site); });
+
     // Process each race
     races.forEach(race => {
       if (!race.Result) return;
-      
+
       // First, count total races for each site (without lap completion restriction)
       race.Result.forEach(result => {
         // Skip invalid times: 999999999 (no valid lap) and 0 (didn't participate)
         if (result.TotalTime !== 999999999 && result.TotalTime !== 0) {
-          const driverPrefix = this.extractDriverPrefix(result.DriverName);
+          const driverPrefix = this.extractDriverPrefix(result.DriverName, siteNames);
           if (driverPrefix && siteStats[driverPrefix]) {
-            // Increment total races
             siteStats[driverPrefix].totalRaces++;
           }
         }
       });
-      
+
       // Then, calculate place finishes with lap completion restriction
       if (!race.Laps) return;
-      
+
       const sortedResults = [...race.Result]
         .filter(result => {
-          // Filter out invalid times
-          if (result.TotalTime === 999999999 || result.TotalTime === 0) {
-            return false;
-          }
-          
-          // Count how many laps this driver completed
+          if (result.TotalTime === 999999999 || result.TotalTime === 0) return false;
           const driverLaps = race.Laps.filter(lap => lap.DriverGuid === result.DriverGuid);
-          const lapCount = driverLaps.length;
-          
-          // Check if all laps have 0 cuts
-          const allLapsHaveZeroCuts = driverLaps.every(lap => lap.Cuts === 0);
-          
-          // Only include drivers who completed at least the required number of laps
-          // and have no cuts on any lap
-          return lapCount >= race.RaceLaps && allLapsHaveZeroCuts;
+          return driverLaps.length >= race.RaceLaps && driverLaps.every(lap => lap.Cuts === 0);
         })
         .sort((a, b) => a.TotalTime - b.TotalTime);
-      
-      // Count only 1st, 2nd, and 3rd place finishes
+
       sortedResults.forEach((result, index) => {
-        if (index > 2) return; // Only process first 3 positions
-        
-        // Extract driver prefix (e.g., "Fishkill" from "Fishkill Driver 1")
-        const driverPrefix = this.extractDriverPrefix(result.DriverName);
-        
+        if (index > 2) return;
+        const driverPrefix = this.extractDriverPrefix(result.DriverName, siteNames);
         if (driverPrefix && siteStats[driverPrefix]) {
-          // Increment placement count based on position
           switch (index) {
             case 0: siteStats[driverPrefix].firstPlaceCount++; break;
             case 1: siteStats[driverPrefix].secondPlaceCount++; break;
@@ -168,9 +145,41 @@ export class DataService {
         }
       });
     });
-    
-    // Convert to array and return
+
     return Object.values(siteStats);
+  }
+
+  private discoverSiteNames(races: RaceData[]): string[] {
+    const allDriverNames = new Set<string>();
+    races.forEach(race => {
+      race.Result?.forEach(r => { if (r.DriverName) allDriverNames.add(r.DriverName.trim()); });
+    });
+
+    // Group driver names by their first word, then determine if the site prefix is
+    // 1-word (e.g. "Fishkill") or 2-word (e.g. "San Juan") by checking whether all
+    // names in that group share the same 2-word prefix.
+    const byFirstWord = new Map<string, string[]>();
+    for (const name of allDriverNames) {
+      const parts = name.split(' ');
+      if (parts.length < 2) continue;
+      const firstWord = parts[0];
+      if (!byFirstWord.has(firstWord)) byFirstWord.set(firstWord, []);
+      byFirstWord.get(firstWord)!.push(name);
+    }
+
+    const siteNames: string[] = [];
+    for (const [firstWord, names] of byFirstWord.entries()) {
+      if (names.every(n => n.split(' ').length > 2)) {
+        const twoWordPrefixes = new Set(names.map(n => n.split(' ').slice(0, 2).join(' ')));
+        if (twoWordPrefixes.size === 1) {
+          siteNames.push(Array.from(twoWordPrefixes)[0]);
+          continue;
+        }
+      }
+      siteNames.push(firstWord);
+    }
+
+    return siteNames;
   }
 
   private initSiteStats(driverName: string): SiteStats {
@@ -183,10 +192,9 @@ export class DataService {
     };
   }
 
-  private extractDriverPrefix(driverName: string): string | null {
-    const prefixes = ['Fishkill', 'Wallkill', 'Warwick', 'San Juan', 'Patterson'];
-    for (const prefix of prefixes) {
-      if (driverName.startsWith(prefix)) {
+  private extractDriverPrefix(driverName: string, knownSites: string[]): string | null {
+    for (const prefix of knownSites) {
+      if (driverName.startsWith(prefix + ' ') || driverName === prefix) {
         return prefix;
       }
     }
