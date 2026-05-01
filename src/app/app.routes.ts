@@ -16,7 +16,6 @@ import { adminGuard } from './guards/admin/admin.guard';
 import { homeGuard } from './guards/home.guard';
 import { loginGuard } from './guards/login.guard';
 import { registerGuard } from './guards/register.guard';
-import { claimGuard } from './guards/claim.guard';
 
 export const routes: Routes = [
     // Default route with smart redirection based on auth state
@@ -28,7 +27,7 @@ export const routes: Routes = [
     
     // Public routes
     {path: 'results', component: RaceDataComponent},
-    {path: 'claim', component: ClaimPageComponent, canActivate: [claimGuard]},
+    {path: 'claim', component: ClaimPageComponent},
     
     // Protected routes
     {path: 'tournament', component: TournamentDetailsComponent, canActivate: [authGuard]},

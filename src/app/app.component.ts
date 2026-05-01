@@ -51,7 +51,7 @@ export class AppComponent implements OnDestroy {
   navItems = [
     { path: 'results', icon: 'home', label: 'Race Results', requiresAuth: false },
     { path: 'history', icon: 'history', label: 'Race History', requiresAuth: true },
-    { path: 'tournament', icon: 'emoji_events', label: 'Tournament', requiresAuth: true },
+    { path: 'tournament', icon: 'emoji_events', label: 'Tournament', requiresAuth: true, requiresAdmin: true },
     { path: 'admin', icon: 'admin_panel_settings', label: 'Admin', requiresAuth: true, requiresAdmin: true },
     { path: 'admin/sites', icon: 'location_on', label: 'Sites', requiresAuth: true, requiresAdmin: true }
   ];
