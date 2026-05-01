@@ -1,9 +1,10 @@
 import { Injectable, inject } from '@angular/core';
-import { 
-  Firestore, 
-  collection, 
-  query, 
-  orderBy, 
+import { toObservable } from '@angular/core/rxjs-interop';
+import {
+  Firestore,
+  collection,
+  query,
+  orderBy,
   limit,
   onSnapshot,
   DocumentData,
@@ -13,16 +14,18 @@ import {
   addDoc,
   updateDoc
 } from '@angular/fire/firestore';
-import { Observable, map } from 'rxjs';
+import { combineLatest, Observable, map } from 'rxjs';
 import { RaceData } from '../models/race-data';
 import { SiteStats } from '../models/site-stats';
 import { Tournament } from '../models/tournament';
+import { SitesService } from './sites.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DataService {
   private firestore: Firestore = inject(Firestore);
+  private sitesService = inject(SitesService);
 
   getAllRacesStream(): Observable<RaceData[]> {
     return new Observable<RaceData[]>(subscriber => {
@@ -97,13 +100,13 @@ export class DataService {
   }
 
   getSiteStatsStream(): Observable<SiteStats[]> {
-    return this.getAllRacesStream().pipe(
-      map(races => this.calculateSiteStats(races))
+    const sites$ = toObservable(this.sitesService.availableSites);
+    return combineLatest([this.getAllRacesStream(), sites$]).pipe(
+      map(([races, siteNames]: [RaceData[], string[]]) => this.calculateSiteStats(races, siteNames))
     );
   }
 
-  private calculateSiteStats(races: RaceData[]): SiteStats[] {
-    const siteNames = this.discoverSiteNames(races);
+  private calculateSiteStats(races: RaceData[], siteNames: string[]): SiteStats[] {
     const siteStats: Record<string, SiteStats> = {};
     siteNames.forEach(site => { siteStats[site] = this.initSiteStats(site); });
 
@@ -149,38 +152,6 @@ export class DataService {
     return Object.values(siteStats);
   }
 
-  private discoverSiteNames(races: RaceData[]): string[] {
-    const allDriverNames = new Set<string>();
-    races.forEach(race => {
-      race.Result?.forEach(r => { if (r.DriverName) allDriverNames.add(r.DriverName.trim()); });
-    });
-
-    // Group driver names by their first word, then determine if the site prefix is
-    // 1-word (e.g. "Fishkill") or 2-word (e.g. "San Juan") by checking whether all
-    // names in that group share the same 2-word prefix.
-    const byFirstWord = new Map<string, string[]>();
-    for (const name of allDriverNames) {
-      const parts = name.split(' ');
-      if (parts.length < 2) continue;
-      const firstWord = parts[0];
-      if (!byFirstWord.has(firstWord)) byFirstWord.set(firstWord, []);
-      byFirstWord.get(firstWord)!.push(name);
-    }
-
-    const siteNames: string[] = [];
-    for (const [firstWord, names] of byFirstWord.entries()) {
-      if (names.every(n => n.split(' ').length > 2)) {
-        const twoWordPrefixes = new Set(names.map(n => n.split(' ').slice(0, 2).join(' ')));
-        if (twoWordPrefixes.size === 1) {
-          siteNames.push(Array.from(twoWordPrefixes)[0]);
-          continue;
-        }
-      }
-      siteNames.push(firstWord);
-    }
-
-    return siteNames;
-  }
 
   private initSiteStats(driverName: string): SiteStats {
     return {
