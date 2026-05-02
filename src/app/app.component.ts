@@ -46,7 +46,7 @@ export class AppComponent implements OnDestroy {
   private subscription?: Subscription;
 
   totalRaces = signal<number>(0);
-  sidenavExpanded = signal(true);
+  sidenavExpanded = signal(false);
   
   navItems = [
     { path: 'results', icon: 'home', label: 'Race Results', requiresAuth: false },
