@@ -27,7 +27,7 @@ export const routes: Routes = [
     
     // Public routes
     {path: 'results', component: RaceDataComponent},
-    {path: 'claim', component: ClaimPageComponent},
+    {path: 'claim', component: ClaimPageComponent, canActivate: [authGuard]},
     
     // Protected routes
     {path: 'tournament', component: TournamentDetailsComponent, canActivate: [authGuard]},
