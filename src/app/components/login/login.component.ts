@@ -182,11 +182,11 @@ export class LoginComponent implements OnInit, OnDestroy {
       if (this.authService.isAuthenticated()) {
         // Navigate to return URL with token if available
         if (this.returnUrl === '/claim' && this.returnToken) {
-          this.router.navigate([this.returnUrl], { 
-            queryParams: { token: this.returnToken } 
+          this.router.navigate([this.returnUrl], {
+            queryParams: { token: this.returnToken }
           });
         } else {
-          this.router.navigate([this.returnUrl]);
+          this.router.navigateByUrl(this.returnUrl);
         }
       }
     }
@@ -212,11 +212,11 @@ export class LoginComponent implements OnInit, OnDestroy {
       .then(() => {
         // Navigate to return URL with token if available
         if (this.returnUrl === '/claim' && this.returnToken) {
-          this.router.navigate([this.returnUrl], { 
-            queryParams: { token: this.returnToken } 
+          this.router.navigate([this.returnUrl], {
+            queryParams: { token: this.returnToken }
           });
         } else {
-          this.router.navigate([this.returnUrl]);
+          this.router.navigateByUrl(this.returnUrl);
         }
       })
       .catch(error => {
